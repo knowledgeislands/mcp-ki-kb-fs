@@ -2,7 +2,7 @@
 /**
  * hnrkb-mcp-server
  *
- * Local stdio MCP server providing read-only access to the HNR Knowledge Base vault.
+ * Local stdio MCP server providing read access to the HNR Knowledge Base vault.
  * Scoped to a single vault root — all paths are validated against it to prevent
  * directory traversal.
  *
@@ -74,7 +74,7 @@ function isNodeError(err: unknown): err is NodeJS.ErrnoException {
 
 const server = new McpServer({
   name: "hnrkb-mcp-server",
-  version: "1.0.0",
+  version: "1.1.0",
 });
 
 /* ---------------------------------------------------------------- */
@@ -206,6 +206,82 @@ async function collectNotes(dir: string, recursive: boolean): Promise<string[]> 
   }
   return results;
 }
+
+/* ---------------------------------------------------------------- */
+/*  kb_write_note                                                   */
+/* ---------------------------------------------------------------- */
+
+server.registerTool(
+  "kb_write_note",
+  {
+    title: "Write KB Note",
+    description: `Write or overwrite a markdown note in the Knowledge Base vault.
+
+Args:
+  - path (string): Vault-relative path to the note.
+    Example: "Pillars/Productivity/Knowledge Management/KB Specifics/Email/Email Status.md"
+  - content (string): Full markdown content to write to the file.
+  - create_dirs (boolean): Create parent directories if they do not exist. Default true.
+
+Returns:
+  Confirmation message with the vault-relative path and byte count written.
+
+Errors:
+  - "Path escapes vault root" when the path attempts directory traversal.
+  - "Directory not found" when create_dirs is false and the parent directory does not exist.`,
+    inputSchema: z.object({
+      path: z
+        .string()
+        .min(1, "Path must not be empty")
+        .describe(
+          "Vault-relative path to the note, e.g. \"Pillars/Finance/Budget.md\""
+        ),
+      content: z
+        .string()
+        .describe("Full markdown content to write to the file."),
+      create_dirs: z
+        .boolean()
+        .default(true)
+        .describe(
+          "Create parent directories if they do not exist. Default true."
+        ),
+    }).strict(),
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  },
+  async ({ path: notePath, content, create_dirs }) => {
+    try {
+      const absPath = resolveVaultPath(notePath);
+
+      if (create_dirs) {
+        await fs.mkdir(path.dirname(absPath), { recursive: true });
+      }
+
+      await fs.writeFile(absPath, content, "utf-8");
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Written: "${notePath}" (${Buffer.byteLength(content, "utf-8")} bytes)`,
+          },
+        ],
+      };
+    } catch (err) {
+      if (isNodeError(err) && err.code === "ENOENT") {
+        return errorResult(
+          `Directory not found for: "${notePath}" — set create_dirs: true to create it automatically`
+        );
+      }
+      const msg = err instanceof Error ? err.message : String(err);
+      return errorResult(`Error writing note: ${msg}`);
+    }
+  }
+);
 
 /* ================================================================ */
 /*  Boot                                                            */
