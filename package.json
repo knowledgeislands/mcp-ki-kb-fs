@@ -8,11 +8,11 @@
     "zod": "^4.4.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.13",
     "@types/node": "^25.6.0",
-    "biome": "^0.3.3",
+    "json5": "^2.2.3",
+    "markdownlint-cli2": "^0.22.1",
     "prettier": "^3.8.3",
-    "tsx": "^4.21.0",
+    "syncpack": "^14.3.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   },
