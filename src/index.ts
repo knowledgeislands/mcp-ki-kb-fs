@@ -28,7 +28,7 @@ function expandHome(p: string): string {
   return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p
 }
 
-console.log(`mcp-kb starting... at ${process.env.KB_ROOT_PATH}`)
+console.error(`mcp-kb starting... at ${process.env.KB_ROOT_PATH}`)
 assert(process.env.KB_ROOT_PATH, 'KB_ROOT_PATH environment variable must be set')
 const VAULT_ROOT = path.resolve(expandHome(process.env.KB_ROOT_PATH))
 
