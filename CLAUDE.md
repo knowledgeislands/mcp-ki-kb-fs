@@ -30,22 +30,24 @@ Scripts:
 
 ## Architecture Overview
 
-`mcp-kb` is a single-file stdio MCP (Model Context Protocol) server that exposes
-read/write access to a local directory of markdown files as a knowledge base
-("vault"). All paths are validated against the configured vault root to prevent
-directory traversal.
+`mcp-kb` is a stdio MCP (Model Context Protocol) server that exposes read/write
+access to a local directory of markdown files as a knowledge base ("vault").
+All paths are validated against the configured vault root to prevent directory
+traversal.
 
-### Core Structure
+### Source Layout
 
 The codebase is TypeScript with ES modules (`"type": "module"` in `package.json`).
 Source lives under `src/`; compiled JS is emitted to `dist/` by `npm run build`
 (via `tsconfig.build.json`).
 
-- `src/index.ts` - The entire server: config loading, path resolution,
-  tool registration, stdio transport boot. Compiled to `dist/index.js`.
-
-There are no separate modules; everything lives in `src/index.ts`. If the file
-grows, split into a `src/tools/` directory and re-export from `src/index.ts`.
+- `src/index.ts` - Entry point. Boots the MCP server and registers each tool;
+  delegates implementation to `notes.ts`.
+- `src/config.ts` - Loads and validates the `ROOT_PATH` env var; exports
+  `VAULT_ROOT`.
+- `src/utils.ts` - Path-traversal-safe `resolveVaultPath`, `errorResult` helper,
+  `isNodeError` type guard.
+- `src/notes.ts` - Tool handlers: `readNote`, `listNotes`, `writeNote`.
 
 ### Tools Exposed
 
@@ -59,11 +61,11 @@ All three tools take vault-relative paths and reject any traversal outside
 
 ### Key Components
 
-- **Vault root**: `VAULT_ROOT` is resolved once at startup from
+- **Vault root**: `VAULT_ROOT` is resolved once at startup in `config.ts` from
   `process.env.ROOT_PATH`. `~` is expanded to the user home dir.
-- **Path safety**: `resolveVaultPath()` normalises separators, strips leading
-  slashes, then verifies the resolved absolute path is strictly inside
-  `VAULT_ROOT` (handles trailing-separator edge case). Throws
+- **Path safety**: `resolveVaultPath()` in `src/utils.ts` normalises separators,
+  strips leading slashes, then verifies the resolved absolute path is strictly
+  inside `VAULT_ROOT` (handles trailing-separator edge case). Throws
   `Path escapes vault root` on traversal attempts.
 - **Error shape**: Tool errors return `{ isError: true, content: [{ type: 'text', text }] }`
   via the `errorResult()` helper. `ENOENT` is mapped to friendly messages

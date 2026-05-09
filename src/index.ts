@@ -11,72 +11,22 @@
  *   ROOT_PATH    Absolute or ~ path to the vault root.
  */
 
-import { strict as assert } from 'node:assert'
-import type { Dirent } from 'node:fs'
 import * as fs from 'node:fs/promises'
-import * as os from 'node:os'
-import * as path from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
+import { VAULT_ROOT } from './config.ts'
+import * as notes from './notes.ts'
 
-/* ================================================================ */
-/*  Config                                                          */
-/* ================================================================ */
-
-function expandHome(p: string): string {
-  return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p
-}
-
-console.error(`mcp-kb starting... at ${process.env.ROOT_PATH}`)
-assert(process.env.ROOT_PATH, 'ROOT_PATH environment variable must be set')
-const VAULT_ROOT = path.resolve(expandHome(process.env.ROOT_PATH))
-
-/* ================================================================ */
-/*  Utilities                                                       */
-/* ================================================================ */
-
-/**
- * Resolve a vault-relative path to an absolute path, rejecting any attempt
- * to escape the vault root via `..` or symlink tricks.
- */
-function resolveVaultPath(relativePath: string): string {
-  // Normalise separators and strip leading slashes so callers don't need to
-  const cleaned = relativePath.replace(/\\/g, '/').replace(/^\/+/, '')
-  const resolved = path.resolve(VAULT_ROOT, cleaned)
-
-  // Ensure the resolved path is strictly inside the vault root
-  const vaultWithSep = VAULT_ROOT.endsWith(path.sep) ? VAULT_ROOT : VAULT_ROOT + path.sep
-
-  if (resolved !== VAULT_ROOT && !resolved.startsWith(vaultWithSep)) {
-    throw new Error(`Path escapes vault root: "${relativePath}"`)
-  }
-  return resolved
-}
-
-function errorResult(message: string) {
-  return {
-    isError: true as const,
-    content: [{ type: 'text' as const, text: message }]
-  }
-}
-
-function isNodeError(err: unknown): err is NodeJS.ErrnoException {
-  return err instanceof Error && 'code' in err
-}
-
-/* ================================================================ */
-/*  Server                                                          */
-/* ================================================================ */
+console.error(`mcp-kb starting... at ${VAULT_ROOT}`)
 
 const server = new McpServer({
   name: 'mcp-kb',
   version: '1.1.0'
 })
 
-/* ---------------------------------------------------------------- */
-/*  kb_read_note                                                    */
-/* ---------------------------------------------------------------- */
+const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const
+const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } as const
 
 server.registerTool(
   'kb_read_note',
@@ -99,31 +49,10 @@ Errors:
         path: z.string().min(1, 'Path must not be empty').describe('Vault-relative path to the note, e.g. "Pillars/Finance/Budget.md"')
       })
       .strict(),
-    annotations: {
-      readOnlyHint: true,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: false
-    }
+    annotations: READ_ONLY
   },
-  async ({ path: notePath }) => {
-    try {
-      const absPath = resolveVaultPath(notePath)
-      const content = await fs.readFile(absPath, 'utf-8')
-      return { content: [{ type: 'text', text: content }] }
-    } catch (err) {
-      if (isNodeError(err) && err.code === 'ENOENT') {
-        return errorResult(`File not found: "${notePath}" (vault: ${VAULT_ROOT})`)
-      }
-      const msg = err instanceof Error ? err.message : String(err)
-      return errorResult(`Error reading note: ${msg}`)
-    }
-  }
+  notes.readNote
 )
-
-/* ---------------------------------------------------------------- */
-/*  kb_list_notes                                                   */
-/* ---------------------------------------------------------------- */
 
 server.registerTool(
   'kb_list_notes',
@@ -143,59 +72,10 @@ Returns:
         recursive: z.boolean().default(false).describe('Descend into subdirectories when true.')
       })
       .strict(),
-    annotations: {
-      readOnlyHint: true,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: false
-    }
+    annotations: READ_ONLY
   },
-  async ({ path: dirPath, recursive }: { path: string; recursive: boolean }) => {
-    try {
-      const absDir = dirPath ? resolveVaultPath(dirPath) : VAULT_ROOT
-      const notes = await collectNotes(absDir, recursive)
-      const relative = notes.map((p) => path.relative(VAULT_ROOT, p))
-      return {
-        content: [
-          {
-            type: 'text',
-            text: relative.length > 0 ? relative.join('\n') : '(no notes found)'
-          }
-        ]
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      return errorResult(`Error listing notes: ${msg}`)
-    }
-  }
+  notes.listNotes
 )
-
-async function collectNotes(dir: string, recursive: boolean): Promise<string[]> {
-  let entries: Dirent[]
-  try {
-    entries = (await fs.readdir(dir, { withFileTypes: true, encoding: 'utf-8' })) as Dirent[]
-  } catch (err) {
-    if (isNodeError(err) && err.code === 'ENOENT') {
-      throw new Error(`Directory not found: "${path.relative(VAULT_ROOT, dir)}"`)
-    }
-    throw err
-  }
-
-  const results: string[] = []
-  for (const entry of entries) {
-    const full = path.join(dir, entry.name)
-    if (entry.isDirectory() && recursive) {
-      results.push(...(await collectNotes(full, true)))
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
-      results.push(full)
-    }
-  }
-  return results
-}
-
-/* ---------------------------------------------------------------- */
-/*  kb_write_note                                                   */
-/* ---------------------------------------------------------------- */
 
 server.registerTool(
   'kb_write_note',
@@ -222,51 +102,16 @@ Errors:
         create_dirs: z.boolean().default(true).describe('Create parent directories if they do not exist. Default true.')
       })
       .strict(),
-    annotations: {
-      readOnlyHint: false,
-      destructiveHint: true,
-      idempotentHint: true,
-      openWorldHint: false
-    }
+    annotations: DESTRUCTIVE
   },
-  async ({ path: notePath, content, create_dirs }) => {
-    try {
-      const absPath = resolveVaultPath(notePath)
-
-      if (create_dirs) {
-        await fs.mkdir(path.dirname(absPath), { recursive: true })
-      }
-
-      await fs.writeFile(absPath, content, 'utf-8')
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Written: "${notePath}" (${Buffer.byteLength(content, 'utf-8')} bytes)`
-          }
-        ]
-      }
-    } catch (err) {
-      if (isNodeError(err) && err.code === 'ENOENT') {
-        return errorResult(`Directory not found for: "${notePath}" — set create_dirs: true to create it automatically`)
-      }
-      const msg = err instanceof Error ? err.message : String(err)
-      return errorResult(`Error writing note: ${msg}`)
-    }
-  }
+  notes.writeNote
 )
 
-/* ================================================================ */
-/*  Boot                                                            */
-/* ================================================================ */
-
 async function main(): Promise<void> {
-  // Verify vault root exists before accepting connections
   try {
     await fs.access(VAULT_ROOT)
   } catch {
-    console.error(`mcp-kb: vault root not accessible: ${VAULT_ROOT}\nSet ROOT_PATH  to the correct path and restart.`)
+    console.error(`mcp-kb: vault root not accessible: ${VAULT_ROOT}\nSet ROOT_PATH to the correct path and restart.`)
     return
   }
 

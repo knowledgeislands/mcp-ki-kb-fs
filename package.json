@@ -8,6 +8,7 @@
     "zod": "^4.4.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.13",
     "@types/node": "^25.6.0",
     "json5": "^2.2.3",
     "markdownlint-cli2": "^0.22.1",
