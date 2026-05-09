@@ -11,7 +11,14 @@
   "bugs": {
     "url": "https://github.com/knowledgeislands/mcp-kb/issues"
   },
-  "keywords": ["mcp", "model-context-protocol", "knowledge-base", "markdown", "claude", "anthropic"],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "knowledge-base",
+    "markdown",
+    "claude",
+    "anthropic"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.1"
@@ -31,6 +38,17 @@
     "node": ">=22.0.0"
   },
   "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mcp-kb": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf {dist,node_modules}",
@@ -43,6 +61,7 @@
     "lint:fix": "npx @biomejs/biome check --write --unsafe",
     "lint:md": "npx prettier --write \"**/*.md\" --ignore-path .gitignore && npx markdownlint-cli2",
     "lint:package": "npx syncpack format",
+    "prepublishOnly": "npm run build",
     "prestart:mcp": "npm run build",
     "start:mcp": "node dist/index.js",
     "test": "vitest run",

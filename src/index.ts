@@ -15,8 +15,8 @@ import * as fs from 'node:fs/promises'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { ROOT_PATH } from './config.ts'
-import * as notes from './notes.ts'
+import { ROOT_PATH } from './config.js'
+import * as notes from './notes.js'
 
 console.error(`mcp-kb starting...`)
 console.error(`  ROOT_PATH=${ROOT_PATH}`)

@@ -1,5 +1,8 @@
 # mcp-kb
 
+[![CI](https://github.com/knowledgeislands/mcp-kb/actions/workflows/ci.yml/badge.svg)](https://github.com/knowledgeislands/mcp-kb/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 A small MCP (Model Context Protocol) server that gives Claude read and write access to a local directory of markdown files as a knowledge base.
 
 All file paths are validated against the configured root, so the server cannot read or write outside it — even if asked to.

@@ -1,8 +1,8 @@
 import type { Dirent } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { ROOT_PATH } from './config.ts'
-import { errorResult, isNodeError, resolveWithinRoot } from './utils.ts'
+import { ROOT_PATH } from './config.js'
+import { errorResult, isNodeError, resolveWithinRoot } from './utils.js'
 
 export const readNote = async ({ path: notePath }: { path: string }) => {
   try {
