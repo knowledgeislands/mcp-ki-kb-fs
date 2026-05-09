@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["/path/to/mcp-kb/dist/index.js"],
       "env": {
-        "ROOT_PATH": "/path/to/your/vault"
+        "ROOT_PATH": "/path/to/your/kb"
       }
     }
   }
