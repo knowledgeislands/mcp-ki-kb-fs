@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import { ROOT_PATH } from './config.ts'
 import { errorResult, isNodeError, resolveWithinRoot } from './utils.ts'
 
-export async function readNote({ path: notePath }: { path: string }) {
+export const readNote = async ({ path: notePath }: { path: string }) => {
   try {
     const absPath = resolveWithinRoot(ROOT_PATH, notePath)
     const content = await fs.readFile(absPath, 'utf-8')
@@ -18,7 +18,7 @@ export async function readNote({ path: notePath }: { path: string }) {
   }
 }
 
-export async function listNotes({ path: dirPath, recursive }: { path: string; recursive: boolean }) {
+export const listNotes = async ({ path: dirPath, recursive }: { path: string; recursive: boolean }) => {
   try {
     const absDir = dirPath ? resolveWithinRoot(ROOT_PATH, dirPath) : ROOT_PATH
     const notes = await collectNotes(absDir, recursive)
@@ -37,7 +37,7 @@ export async function listNotes({ path: dirPath, recursive }: { path: string; re
   }
 }
 
-export async function writeNote({ path: notePath, content, create_dirs }: { path: string; content: string; create_dirs: boolean }) {
+export const writeNote = async ({ path: notePath, content, create_dirs }: { path: string; content: string; create_dirs: boolean }) => {
   try {
     const absPath = resolveWithinRoot(ROOT_PATH, notePath)
     if (create_dirs) {
@@ -61,7 +61,7 @@ export async function writeNote({ path: notePath, content, create_dirs }: { path
   }
 }
 
-async function collectNotes(dir: string, recursive: boolean): Promise<string[]> {
+const collectNotes = async (dir: string, recursive: boolean): Promise<string[]> => {
   let entries: Dirent[]
   try {
     entries = (await fs.readdir(dir, { withFileTypes: true, encoding: 'utf-8' })) as Dirent[]

@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert'
 import * as os from 'node:os'
 import * as path from 'node:path'
 
-function expandHome(p: string): string {
+const expandHome = (p: string): string => {
   return p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p
 }
 
