@@ -3,19 +3,30 @@
 This package is published to npm under the `@knowledgeislands` scope as
 `@knowledgeislands/mcp-kb`.
 
-## One-time setup
+Releases are **automated via [release-please](https://github.com/googleapis/release-please)**
+and the `Release` GitHub Actions workflow (`.github/workflows/release.yml`).
+You should not need to run `npm publish` manually except for emergencies.
 
-You only need to do these once per machine.
+## How releases work
+
+```text
+Conventional Commits on main
+  → release-please opens / updates a "Release PR"
+  → merge the Release PR
+  → release-please tags the commit (e.g. v1.2.0) and creates a GitHub Release
+  → CI publishes to npm with provenance
+```
+
+That's it. As long as you commit with [Conventional Commits](https://www.conventionalcommits.org/)
+(`feat:`, `fix:`, etc. — see `CONTRIBUTING.md`), version bumps and changelog
+entries are derived automatically.
+
+## One-time setup (per maintainer / org)
 
 ### 1. Create / sign in to an npm account
 
 ```bash
 npm login
-```
-
-This opens a browser for OAuth. Verify with:
-
-```bash
 npm whoami
 ```
 
@@ -24,108 +35,83 @@ npm whoami
 If it doesn't:
 
 ```bash
-# Create the org (web only — npm CLI cannot create orgs)
 open https://www.npmjs.com/org/create
 ```
 
-Add yourself as a member (or owner). Public scoped packages don't require a
-paid plan.
+Public scoped packages don't require a paid plan.
 
-### 3. Enable 2FA (recommended)
+### 3. Add an `NPM_TOKEN` secret to the GitHub repo
+
+The release workflow needs an automation token to publish.
+
+1. Generate one: <https://www.npmjs.com/settings/_/tokens> → "Generate New
+   Token" → "Automation" type. Copy the value once shown.
+2. Add it to the repo: `https://github.com/knowledgeislands/mcp-kb/settings/secrets/actions`
+   → "New repository secret" → name `NPM_TOKEN`, paste the value.
+
+### 4. Enable 2FA on your npm account
 
 ```bash
 npm profile enable-2fa auth-and-writes
 ```
 
-You'll be prompted for the OTP on every publish.
+(Automation tokens bypass the OTP prompt for CI; your interactive logins still
+require it.)
 
-## Publish workflow
+## Per-release flow
 
-### 1. Make sure the working tree is clean
+1. Land your changes on `main` with Conventional Commits.
+2. Wait for release-please to open (or update) a `chore: release X.Y.Z` PR.
+3. Review the proposed `CHANGELOG.md` entries and version bump.
+4. Merge the Release PR.
+5. The Release workflow tags + publishes automatically. Verify on
+   <https://www.npmjs.com/package/@knowledgeislands/mcp-kb>.
 
-```bash
-git status
-```
+## Manual publishing (emergencies only)
 
-Commit or stash everything before publishing — `npm publish` packages
-whatever's on disk, not what's committed.
-
-### 2. Bump the version
-
-Use one of:
-
-```bash
-npm version patch   # 1.0.0 → 1.0.1   (bug fixes)
-npm version minor   # 1.0.0 → 1.1.0   (new features, backwards compatible)
-npm version major   # 1.0.0 → 2.0.0   (breaking changes)
-```
-
-`npm version` updates `package.json`, creates a git commit, and tags it
-(`v1.0.1`). Push the tag with `git push --follow-tags`.
-
-### 3. Publish
+If release-please is broken or you need a hotfix without going through `main`:
 
 ```bash
-npm publish
+git status                            # clean tree
+npm version patch                     # or minor/major — bumps + commits + tags
+git push --follow-tags
+npm publish --provenance --access public
 ```
 
-This automatically runs `prepublishOnly` (which runs `npm run build`) so
-`dist/` is fresh before the tarball is built.
+`prepublishOnly` automatically runs `npm run build` first.
 
-If 2FA is on, you'll be asked for an OTP.
-
-### 4. Verify
-
-```bash
-npm view @knowledgeislands/mcp-kb
-```
-
-Or visit <https://www.npmjs.com/package/@knowledgeislands/mcp-kb>.
+After a manual publish, sync `release-please-config.json` and
+`.release-please-manifest.json` so release-please picks up where you left off.
 
 ## Dry run
 
-Before the real publish, inspect exactly what will ship:
+Inspect what will ship without publishing:
 
 ```bash
 npm pack --dry-run
 ```
 
-This prints the tarball file list, package size, and total file count without
-actually publishing or producing a tarball. Cross-check against `files` in
-`package.json` (currently `["dist"]`).
+Cross-check against `files` in `package.json` (currently `["dist"]`).
+
+## What gets published
+
+The `files` field is the allowlist. npm always also includes `package.json`,
+`README.md`, `LICENSE`, and any `bin` executables.
+
+Excluded automatically: source under `src/`, tests, configs, `node_modules/`,
+`.tsbuildinfo`, coverage output, etc.
 
 ## Unpublishing
 
-npm allows unpublish only within 72 hours of publish, and only when no other
-package depends on the version. Generally prefer **deprecation** over
-unpublish:
+npm only allows unpublish within 72 hours and only when nothing depends on the
+version. Generally prefer **deprecation**:
 
 ```bash
 npm deprecate @knowledgeislands/mcp-kb@1.2.3 "use 1.2.4 — fixes <issue>"
 ```
 
-For real removal within the 72-hour window:
+For real removal within 72 hours:
 
 ```bash
 npm unpublish @knowledgeislands/mcp-kb@1.2.3
 ```
-
-## What gets published
-
-The `files` field in `package.json` is the allowlist. npm always also includes
-`package.json`, `README.md`, `LICENSE`, and any executables listed in `bin`.
-
-Everything else (sources under `src/`, tests, configs, `node_modules/`,
-`.tsbuildinfo`, etc.) is excluded automatically.
-
-## Release checklist
-
-- [ ] All changes merged to `main`
-- [ ] CI is green on `main`
-- [ ] `CHANGELOG.md` updated (if present)
-- [ ] `npm pack --dry-run` shows the expected files
-- [ ] `npm version <patch|minor|major>` to bump + tag
-- [ ] `git push --follow-tags`
-- [ ] `npm publish`
-- [ ] Verify on <https://www.npmjs.com/package/@knowledgeislands/mcp-kb>
-- [ ] Create a GitHub Release from the new tag (optional)

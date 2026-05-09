@@ -1,6 +1,9 @@
 # Build output
 dist/
 
+# Coverage output
+coverage/
+
 # Dependency directories
 node_modules/
 npm-debug.log*
