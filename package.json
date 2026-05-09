@@ -1,6 +1,6 @@
 {
   "name": "mcp-kb",
-  "description": "MCP server for readonly access to a local directory of markdown files as a knowledge base",
+  "description": "MCP for markdown based knowledge bases on a local filesystem",
   "version": "1.0.0",
   "author": "kris@kris.me.uk",
   "dependencies": {
