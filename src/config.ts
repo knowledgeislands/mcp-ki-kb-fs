@@ -8,4 +8,4 @@ function expandHome(p: string): string {
 
 assert(process.env.ROOT_PATH, 'ROOT_PATH environment variable must be set')
 
-export const VAULT_ROOT: string = path.resolve(expandHome(process.env.ROOT_PATH))
+export const ROOT_PATH: string = path.resolve(expandHome(process.env.ROOT_PATH))

@@ -15,11 +15,11 @@ import * as fs from 'node:fs/promises'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { VAULT_ROOT } from './config.ts'
+import { ROOT_PATH } from './config.ts'
 import * as notes from './notes.ts'
 
 console.error(`mcp-kb starting...`)
-console.error(`  ROOT_PATH=${VAULT_ROOT}`)
+console.error(`  ROOT_PATH=${ROOT_PATH}`)
 
 const server = new McpServer({
   name: 'mcp-kb',
@@ -110,9 +110,9 @@ Errors:
 
 async function main(): Promise<void> {
   try {
-    await fs.access(VAULT_ROOT)
+    await fs.access(ROOT_PATH)
   } catch {
-    console.error(`mcp-kb: vault root not accessible: ${VAULT_ROOT}\nSet ROOT_PATH to the correct path and restart.`)
+    console.error(`mcp-kb: vault root not accessible: ${ROOT_PATH}\nSet ROOT_PATH to the correct path and restart.`)
     return
   }
 
