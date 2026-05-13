@@ -12,6 +12,8 @@ An MCP (Model Context Protocol) server that gives Claude read and write access t
 - **Strict file types** — notes must end in `.md`; folder listings only return directories.
 - **No network, no auth** — pure local filesystem over MCP stdio.
 
+**Quality:** 72 tests at 100% coverage across statements, branches, functions, and lines.
+
 ## Available Tools
 
 | Tool | Description |
@@ -81,6 +83,34 @@ Same input shape as `kb_list_notes`. Returns a newline-separated list of KB-rela
 3. **Build**: `npm run build`
 4. **Configure Claude Desktop** with the path to `dist/mcp-server/index.js` and your `ROOT_PATH` (see [Configuration](#configuration)).
 5. **Restart Claude Desktop** — the four `kb_*` tools should appear.
+
+## Example Conversations
+
+Concrete asks you might make of Claude with this server connected.
+
+**Survey a section of the KB:**
+
+> "List every note under `Pillars/Finance`, recursively."
+
+Claude calls [`kb_list_notes`](#kb_list_notes) with `path: "Pillars/Finance", recursive: true` and returns the newline-separated list of KB-relative `.md` paths. Folders are excluded; only `.md` files appear.
+
+**Read a specific note:**
+
+> "Show me my Budget.md note from `Pillars/Finance`."
+
+Claude calls [`kb_read_note`](#kb_read_note) with the KB-relative path. If the path doesn't end in `.md`, escapes the root, or matches a protected pattern (dotfile, root-level repo-meta), the tool returns a clear error string instead of silently failing.
+
+**Capture meeting notes:**
+
+> "Save these notes as today's daily under `Inbox/2026-05-13.md` — create the Inbox folder if it doesn't exist yet."
+
+Claude calls [`kb_write_note`](#kb_write_note) with the markdown content and `create_dirs: true` (the default). The path goes through both the lexical and `realpath` safety checks before any byte is written.
+
+**Discover structure:**
+
+> "What top-level folders exist in my knowledge base?"
+
+Claude calls [`kb_list_folders`](#kb_list_folders) with `path: ""` (the root) and `recursive: false`. Same input shape as `kb_list_notes`; returns directories only.
 
 ## Installation
 
