@@ -39,7 +39,7 @@ The codebase is TypeScript with ES modules (`"type": "module"` in `package.json`
 - `src/mcp-server/index.ts` - Entry point. Boots the MCP server and registers each tool; delegates implementation to `notes.ts`.
 - `src/config.ts` - Loads and validates the `MCP_KB_ROOT_PATH` env var; exports the resolved `ROOT_PATH` constant.
 - `src/utils/annotations.ts` - MCP tool annotation presets (`READ_ONLY`, `DESTRUCTIVE`).
-- `src/utils.ts` - Lexical guard `resolveWithinRoot`, async realpath guard `assertRealPathWithinRoot`, plus `errorResult`/`jsonResult` helpers and the `isNodeError` type guard.
+- `src/utils/utils.ts` - Lexical guard `resolveWithinRoot`, async realpath guard `assertRealPathWithinRoot`, plus `errorResult`/`jsonResult` helpers and the `isNodeError` type guard.
 - `src/protected.ts` - `isProtectedPath` predicate: hides dotfiles/dotdirs at any depth and root-level repo-meta basenames.
 - `src/notes.ts` - Tool handlers: `readNote`, `listNotes`, `listFolders`, `writeNote`.
 
@@ -56,8 +56,8 @@ All tools take KB-relative paths and reject any traversal outside `MCP_KB_ROOT_P
 
 - **Root**: `ROOT_PATH` (TS const) is resolved once at startup in `config.ts` from `process.env.MCP_KB_ROOT_PATH`. `~` is expanded to the user home dir.
 - **Path safety (two layers)**:
-  1. `resolveWithinRoot()` in `src/utils.ts` normalises separators, strips leading slashes, then verifies the resolved absolute path is strictly inside the root (handles trailing-separator edge case). Throws `Path escapes root` on traversal attempts.
-  2. `assertRealPathWithinRoot()` (also in `src/utils.ts`) calls `fs.realpath` on both the root and the target — or, for new-file writes, the deepest existing ancestor — and rejects symlink-based escapes that the lexical check cannot see. Handlers call this after `resolveWithinRoot` and before any FS access.
+  1. `resolveWithinRoot()` in `src/utils/utils.ts` normalises separators, strips leading slashes, then verifies the resolved absolute path is strictly inside the root (handles trailing-separator edge case). Throws `Path escapes root` on traversal attempts.
+  2. `assertRealPathWithinRoot()` (also in `src/utils/utils.ts`) calls `fs.realpath` on both the root and the target — or, for new-file writes, the deepest existing ancestor — and rejects symlink-based escapes that the lexical check cannot see. Handlers call this after `resolveWithinRoot` and before any FS access.
 - **Protected paths**: `isProtectedPath()` in `src/protected.ts` is the single source of truth. Two rules:
   - any path segment starting with `.` is protected at any depth (dotfile/dotdir convention);
   - root-level basenames `README`, `CLAUDE`, `LICENSE`, `CHANGELOG`, `CONTRIBUTING`, `SECURITY`, `CODE_OF_CONDUCT`, `AGENTS` (case-insensitive, with optional `.md`/`.txt`) are protected. Nested files with the same names remain accessible.
@@ -84,7 +84,7 @@ All tools take KB-relative paths and reject any traversal outside `MCP_KB_ROOT_P
 
 Invariants every tool that touches the filesystem must uphold. New tools and changes to existing tools must preserve all of these.
 
-1. **Two-layer path containment, every call site.** Before any `fs.*` call, run user input through **both** `resolveWithinRoot()` (lexical) and `assertRealPathWithinRoot()` (realpath). The lexical guard catches `..`, absolute-style inputs, and Windows separators; the realpath guard catches symlink escapes that the lexical check cannot see. Both live in [src/utils.ts](./src/utils.ts).
+1. **Two-layer path containment, every call site.** Before any `fs.*` call, run user input through **both** `resolveWithinRoot()` (lexical) and `assertRealPathWithinRoot()` (realpath). The lexical guard catches `..`, absolute-style inputs, and Windows separators; the realpath guard catches symlink escapes that the lexical check cannot see. Both live in [src/utils/utils.ts](./src/utils/utils.ts).
 2. **Protected paths are non-negotiable.** Every read/write/list handler calls `isProtectedPath()` on the resolved path. Dotfiles/dotdirs at any depth and root-level repo-meta names (README, CLAUDE, LICENSE, etc.) must remain unreachable. New tools that touch the FS must call this filter — see existing handlers in [src/notes.ts](./src/notes.ts) for the pattern.
 3. **File-type discipline.** Note tools only accept `.md` paths and reject non-files. New tools that walk the tree must filter by intended type, not return arbitrary files.
 4. **Zod schemas are `.strict()`.** All tool input schemas reject unknown fields. Numeric inputs are bounded.
