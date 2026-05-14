@@ -87,9 +87,10 @@ Args:
     Example: "CLAUDE.md"
   - content (string): Full markdown content to write to the file.
   - create_dirs (boolean): Create parent directories if they do not exist. Default true.
+  - dry_run (boolean): When true (the default), validate inputs and report what would change without writing anything. Pass dry_run: false to actually write the file.
 
 Returns:
-  Confirmation message with the KB-relative path and byte count written.
+  Confirmation message with the KB-relative path and byte count written, or a "[dry_run] would ..." preview.
 
 Errors:
   - "Path escapes root" when the path attempts directory traversal.
@@ -98,7 +99,8 @@ Errors:
         .object({
           path: z.string().min(1, 'Path must not be empty').describe('KB-relative path to the note, e.g. "CLAUDE.md"'),
           content: z.string().describe('Full markdown content to write to the file.'),
-          create_dirs: z.boolean().default(true).describe('Create parent directories if they do not exist. Default true.')
+          create_dirs: z.boolean().default(true).describe('Create parent directories if they do not exist. Default true.'),
+          dry_run: z.boolean().default(true).describe('Preview only; do not write. Default true — pass false to actually write.')
         })
         .strict(),
       annotations: DESTRUCTIVE

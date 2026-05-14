@@ -79,7 +79,7 @@ export const listFolders = async ({ path: dirPath, recursive }: { path: string; 
   }
 }
 
-export const writeNote = async ({ path: notePath, content, create_dirs }: { path: string; content: string; create_dirs: boolean }) => {
+export const writeNote = async ({ path: notePath, content, create_dirs, dry_run }: { path: string; content: string; create_dirs: boolean; dry_run: boolean }) => {
   if (!isNote(notePath)) {
     return errorResult(`Notes must end in "${NOTE_EXT}": "${notePath}"`)
   }
@@ -88,16 +88,37 @@ export const writeNote = async ({ path: notePath, content, create_dirs }: { path
     if (isProtectedPath(relativeFromRoot(absPath))) {
       return errorResult(`Path is protected: "${notePath}"`)
     }
-    if (create_dirs) {
+    if (create_dirs && !dry_run) {
       await fs.mkdir(path.dirname(absPath), { recursive: true })
     }
     await assertRealPathWithinRoot(ROOT_PATH, absPath)
+    const bytes = Buffer.byteLength(content, 'utf-8')
+    if (dry_run) {
+      let exists = false
+      let existingBytes = 0
+      try {
+        const stat = await fs.stat(absPath)
+        exists = stat.isFile()
+        existingBytes = stat.size
+      } catch (err) {
+        if (!(isNodeError(err) && err.code === 'ENOENT')) throw err
+      }
+      const action = exists ? `would overwrite (${existingBytes} → ${bytes} bytes)` : `would create (${bytes} bytes)`
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: `[dry_run] ${action}: "${notePath}"`
+          }
+        ]
+      }
+    }
     await fs.writeFile(absPath, content, 'utf-8')
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Written: "${notePath}" (${Buffer.byteLength(content, 'utf-8')} bytes)`
+          text: `Written: "${notePath}" (${bytes} bytes)`
         }
       ]
     }

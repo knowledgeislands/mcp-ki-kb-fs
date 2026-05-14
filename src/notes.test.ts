@@ -20,36 +20,50 @@ beforeEach(async () => {
 
 describe('writeNote', () => {
   it('writes a new note and reports byte count', async () => {
-    const result = await writeNote({ path: 'a.md', content: '# hello', create_dirs: true })
+    const result = await writeNote({ path: 'a.md', content: '# hello', create_dirs: true, dry_run: false })
     expect(result.content[0].text).toBe('Written: "a.md" (7 bytes)')
     const onDisk = await fs.readFile(path.join(ROOT_PATH, 'a.md'), 'utf-8')
     expect(onDisk).toBe('# hello')
   })
 
   it('creates parent directories when create_dirs is true', async () => {
-    await writeNote({ path: 'sub/nested/deep.md', content: 'x', create_dirs: true })
+    await writeNote({ path: 'sub/nested/deep.md', content: 'x', create_dirs: true, dry_run: false })
     const onDisk = await fs.readFile(path.join(ROOT_PATH, 'sub/nested/deep.md'), 'utf-8')
     expect(onDisk).toBe('x')
   })
 
   it('returns a friendly error when the parent dir is missing and create_dirs is false', async () => {
-    const result = await writeNote({ path: 'missing/note.md', content: 'x', create_dirs: false })
+    const result = await writeNote({ path: 'missing/note.md', content: 'x', create_dirs: false, dry_run: false })
     expect((result as { isError?: boolean }).isError).toBe(true)
     expect(result.content[0].text).toContain('Directory not found for: "missing/note.md"')
     expect(result.content[0].text).toContain('set create_dirs: true')
   })
 
   it('rejects path traversal', async () => {
-    const result = await writeNote({ path: '../escape.md', content: 'x', create_dirs: true })
+    const result = await writeNote({ path: '../escape.md', content: 'x', create_dirs: true, dry_run: false })
     expect((result as { isError?: boolean }).isError).toBe(true)
     expect(result.content[0].text).toContain('Path escapes root')
   })
 
   it('overwrites an existing file', async () => {
-    await writeNote({ path: 'over.md', content: 'first', create_dirs: true })
-    await writeNote({ path: 'over.md', content: 'second', create_dirs: true })
+    await writeNote({ path: 'over.md', content: 'first', create_dirs: true, dry_run: false })
+    await writeNote({ path: 'over.md', content: 'second', create_dirs: true, dry_run: false })
     const onDisk = await fs.readFile(path.join(ROOT_PATH, 'over.md'), 'utf-8')
     expect(onDisk).toBe('second')
+  })
+
+  it('dry_run previews a new file without writing', async () => {
+    const result = await writeNote({ path: 'preview.md', content: 'hello world', create_dirs: true, dry_run: true })
+    expect(result.content[0].text).toBe('[dry_run] would create (11 bytes): "preview.md"')
+    await expect(fs.access(path.join(ROOT_PATH, 'preview.md'))).rejects.toThrow()
+  })
+
+  it('dry_run previews an overwrite with both old and new byte counts', async () => {
+    await writeNote({ path: 'doc.md', content: 'short', create_dirs: true, dry_run: false })
+    const result = await writeNote({ path: 'doc.md', content: 'a much longer body', create_dirs: true, dry_run: true })
+    expect(result.content[0].text).toBe('[dry_run] would overwrite (5 → 18 bytes): "doc.md"')
+    const onDisk = await fs.readFile(path.join(ROOT_PATH, 'doc.md'), 'utf-8')
+    expect(onDisk).toBe('short')
   })
 })
 
@@ -203,13 +217,13 @@ describe('protection: dotfiles and root-meta files', () => {
   })
 
   it('writeNote refuses root README.md', async () => {
-    const result = await writeNote({ path: 'README.md', content: 'x', create_dirs: true })
+    const result = await writeNote({ path: 'README.md', content: 'x', create_dirs: true, dry_run: false })
     expect((result as { isError?: boolean }).isError).toBe(true)
     expect(result.content[0].text).toContain('Path is protected')
   })
 
   it('writeNote refuses dotdir paths', async () => {
-    const result = await writeNote({ path: '.obsidian/foo.md', content: 'x', create_dirs: true })
+    const result = await writeNote({ path: '.obsidian/foo.md', content: 'x', create_dirs: true, dry_run: false })
     expect((result as { isError?: boolean }).isError).toBe(true)
     expect(result.content[0].text).toContain('Path is protected')
   })
@@ -254,7 +268,7 @@ describe('protection: .md extension enforcement', () => {
   })
 
   it('writeNote refuses non-.md paths', async () => {
-    const result = await writeNote({ path: 'note.txt', content: 'x', create_dirs: true })
+    const result = await writeNote({ path: 'note.txt', content: 'x', create_dirs: true, dry_run: false })
     expect((result as { isError?: boolean }).isError).toBe(true)
     expect(result.content[0].text).toContain('Notes must end in ".md"')
   })
@@ -293,7 +307,7 @@ describe('path resolution hardening', () => {
     await fs.mkdir(outside, { recursive: true })
     try {
       await fs.symlink(outside, path.join(ROOT_PATH, 'leakdir'))
-      const result = await writeNote({ path: 'leakdir/x.md', content: 'leaked', create_dirs: false })
+      const result = await writeNote({ path: 'leakdir/x.md', content: 'leaked', create_dirs: false, dry_run: false })
       expect((result as { isError?: boolean }).isError).toBe(true)
       expect(result.content[0].text).toContain('Path escapes root')
       const exists = await fs

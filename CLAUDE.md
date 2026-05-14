@@ -50,7 +50,7 @@ All tools take KB-relative paths and reject any traversal outside `MCP_KB_ROOT_P
 - `kb_read_note` - Read full markdown content of a note. Read-only, idempotent.
 - `kb_list_notes` - List `.md` files in a directory, optionally recursive. Read-only.
 - `kb_list_folders` - List subfolders in a directory, optionally recursive. Read-only. Same input schema as `kb_list_notes`.
-- `kb_write_note` - Write or overwrite a note. Optionally creates parent dirs (`create_dirs`, default `true`). Marked destructive in tool annotations.
+- `kb_write_note` - Write or overwrite a note. Optionally creates parent dirs (`create_dirs`, default `true`). Marked destructive in tool annotations. `dry_run` defaults to `true` — callers must pass `dry_run: false` to actually write; dry-run returns a `[dry_run] would create (N bytes)` or `[dry_run] would overwrite (M → N bytes)` preview without touching disk.
 
 ### Key Components
 
