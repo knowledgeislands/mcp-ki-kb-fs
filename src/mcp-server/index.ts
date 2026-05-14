@@ -14,16 +14,23 @@
 import * as fs from 'node:fs/promises'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { ROOT_PATH } from '../config.js'
+import { AUDIT_LOG_ALL, AUDIT_LOG_PATH, ROOT_PATH } from '../config.js'
+import { makeAuditedRegister } from '../shared/audit-log.js'
 import { registerNotesTools } from '../tools/index.js'
 
 console.error(`mcp-kb starting...`)
 console.error(`  MCP_KB_ROOT_PATH=${ROOT_PATH}`)
+console.error(`  MCP_KB_AUDIT_LOG_PATH=${AUDIT_LOG_PATH}${AUDIT_LOG_ALL ? ' (logging all roles)' : ' (writes only)'}`)
 
 const server = new McpServer({
   name: 'mcp-kb',
   version: '1.1.0'
 })
+
+// Monkey-patch registerTool so every tool's callback is wrapped with the
+// audit logger. Done in-place rather than passing a wrapped reference because
+// registerNotesTools calls server.registerTool directly.
+server.registerTool = makeAuditedRegister(server)
 
 registerNotesTools(server)
 
