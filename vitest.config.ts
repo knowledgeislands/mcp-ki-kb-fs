@@ -11,7 +11,7 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     fileParallelism: false,
     env: {
-      MCP_KB_ROOT_PATH: TEST_ROOT
+      MCP_KB_FS_ROOT_PATH: TEST_ROOT
     },
     coverage: {
       provider: 'v8',

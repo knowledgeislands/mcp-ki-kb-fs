@@ -1,6 +1,6 @@
 # Publishing
 
-This package is published to npm under the `@knowledgeislands` scope as `@knowledgeislands/mcp-kb`.
+This package is published to npm under the `@knowledgeislands` scope as `@knowledgeislands/mcp-kb-fs`.
 
 Releases are **automated via [release-please](https://github.com/googleapis/release-please)** and the `Release` GitHub Actions workflow (`.github/workflows/release.yml`). You should not need to run `npm publish` manually except for emergencies.
 
@@ -40,7 +40,7 @@ Public scoped packages don't require a paid plan.
 The release workflow needs an automation token to publish.
 
 1. Generate one: <https://www.npmjs.com/settings/_/tokens> → "Generate New Token" → "Automation" type. Copy the value once shown.
-2. Add it to the repo: `https://github.com/knowledgeislands/mcp-kb/settings/secrets/actions` → "New repository secret" → name `NPM_TOKEN`, paste the value.
+2. Add it to the repo: `https://github.com/knowledgeislands/mcp-kb-fs/settings/secrets/actions` → "New repository secret" → name `NPM_TOKEN`, paste the value.
 
 ### 4. Enable 2FA on your npm account
 
@@ -56,7 +56,7 @@ npm profile enable-2fa auth-and-writes
 2. Wait for release-please to open (or update) a `chore: release X.Y.Z` PR.
 3. Review the proposed `CHANGELOG.md` entries and version bump.
 4. Merge the Release PR.
-5. The Release workflow tags + publishes automatically. Verify on <https://www.npmjs.com/package/@knowledgeislands/mcp-kb>.
+5. The Release workflow tags + publishes automatically. Verify on <https://www.npmjs.com/package/@knowledgeislands/mcp-kb-fs>.
 
 ## Manual publishing (emergencies only)
 
@@ -94,11 +94,11 @@ Excluded automatically: source under `src/`, tests, configs, `node_modules/`, `.
 npm only allows unpublish within 72 hours and only when nothing depends on the version. Generally prefer **deprecation**:
 
 ```bash
-npm deprecate @knowledgeislands/mcp-kb@1.2.3 "use 1.2.4 — fixes <issue>"
+npm deprecate @knowledgeislands/mcp-kb-fs@1.2.3 "use 1.2.4 — fixes <issue>"
 ```
 
 For real removal within 72 hours:
 
 ```bash
-npm unpublish @knowledgeislands/mcp-kb@1.2.3
+npm unpublish @knowledgeislands/mcp-kb-fs@1.2.3
 ```

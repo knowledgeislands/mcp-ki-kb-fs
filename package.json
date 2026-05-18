@@ -1,13 +1,13 @@
 {
-  "name": "@knowledgeislands/mcp-kb",
+  "name": "@knowledgeislands/mcp-kb-fs",
   "description": "MCP for markdown-based knowledge bases on a local filesystem",
   "version": "1.0.0",
   "author": "kris@kris.me.uk",
   "bin": {
-    "mcp-kb": "dist/mcp-server/index.js"
+    "mcp-kb-fs": "dist/mcp-server/index.js"
   },
   "bugs": {
-    "url": "https://github.com/knowledgeislands/mcp-kb/issues"
+    "url": "https://github.com/knowledgeislands/mcp-kb-fs/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -32,7 +32,7 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/knowledgeislands/mcp-kb#readme",
+  "homepage": "https://github.com/knowledgeislands/mcp-kb-fs#readme",
   "keywords": [
     "anthropic",
     "claude",
@@ -52,7 +52,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/knowledgeislands/mcp-kb.git"
+    "url": "git+https://github.com/knowledgeislands/mcp-kb-fs.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
