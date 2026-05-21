@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import * as notes from '../../notes.js'
-import { DESTRUCTIVE, READ_ONLY } from '../../utils/annotations.js'
+import { DESTRUCTIVE, READ_ONLY, WRITE, WRITE_IDEMPOTENT } from '../../utils/annotations.js'
 
 export const registerNotesTools = (server: McpServer): void => {
   server.registerTool(
@@ -106,5 +106,92 @@ Errors:
       annotations: DESTRUCTIVE
     },
     notes.writeNote
+  )
+
+  server.registerTool(
+    'kb_note_rename',
+    {
+      title: 'Rename KB Note',
+      description: `Rename or move a markdown note within the knowledge base. Non-destructive: refuses to overwrite an existing destination.
+
+Args:
+  - from (string): Current KB-relative path of the note.
+    Example: "Inbox/draft.md"
+  - to (string): New KB-relative path for the note.
+    Example: "Pillars/Finance/Budget.md"
+  - create_dirs (boolean): Create parent directories of the destination if they do not exist. Default true.
+
+Returns:
+  Confirmation message with both paths.
+
+Errors:
+  - "Destination already exists" — refuses to overwrite (use kb_note_delete + kb_note_write if you really want that).
+  - "File not found" when the source does not exist.
+  - "Path escapes root" / "Path is protected" — standard guards on both paths.`,
+      inputSchema: z
+        .object({
+          from: z.string().min(1, 'from must not be empty').describe('Current KB-relative path of the note, e.g. "Inbox/draft.md"'),
+          to: z.string().min(1, 'to must not be empty').describe('New KB-relative path for the note, e.g. "Pillars/Finance/Budget.md"'),
+          create_dirs: z.boolean().default(true).describe('Create parent directories of the destination if they do not exist. Default true.')
+        })
+        .strict(),
+      annotations: WRITE
+    },
+    notes.renameNote
+  )
+
+  server.registerTool(
+    'kb_folder_create',
+    {
+      title: 'Create KB Folder',
+      description: `Create a folder in the knowledge base. Idempotent: succeeds even if the folder already exists. Parent directories are created as needed.
+
+Args:
+  - path (string): KB-relative folder path to create.
+    Example: "Pillars/Finance/2026"
+
+Returns:
+  Confirmation message indicating whether the folder was created or already existed.
+
+Errors:
+  - "Path exists as a file, not a folder" when the path already exists as a regular file.
+  - "Path escapes root" / "Path is protected" — standard guards.`,
+      inputSchema: z
+        .object({
+          path: z.string().min(1, 'Path must not be empty').describe('KB-relative folder path to create, e.g. "Pillars/Finance/2026"')
+        })
+        .strict(),
+      annotations: WRITE_IDEMPOTENT
+    },
+    notes.createFolder
+  )
+
+  server.registerTool(
+    'kb_note_delete',
+    {
+      title: 'Delete KB Note',
+      description: `Delete a markdown note from the knowledge base.
+
+Args:
+  - path (string): KB-relative path of the note to delete.
+    Example: "Inbox/2026-04-30.md"
+  - dry_run (boolean): When true (the default), report what would be deleted without removing anything. Pass dry_run: false to actually delete.
+
+Returns:
+  Confirmation message with the KB-relative path and byte count deleted, or a "[dry_run] would delete (N bytes)" preview.
+
+Errors:
+  - "File not found" when the path does not exist.
+  - "Not a note file" when the path is not a regular file.
+  - "Path escapes root" / "Path is protected" — standard guards.`,
+      inputSchema: z
+        .object({
+          path: z.string().min(1, 'Path must not be empty').describe('KB-relative path of the note to delete, e.g. "Inbox/2026-04-30.md"'),
+          dry_run: z.boolean().default(true).describe('Preview only; do not delete. Default true — pass false to actually delete.')
+        })
+        .strict(),
+      annotations: DESTRUCTIVE
+    },
+    notes.deleteNote
   )
 }

@@ -27,7 +27,7 @@ Tool names follow `<app>_<resource>_<action>` (snake_case) with `<app>` = `kb`. 
 - explicit `readOnlyHint: false` AND `destructiveHint: false` → `write` (non-destructive mutation)
 - anything else (unannotated / partially annotated) → `destructive` (fail-safe)
 
-A tool registers when its derived level is at or below `MCP_KB_FS_ACCESS_LEVEL` (default: `read`). Levels nest: `read` registers only readers; `write` adds non-destructive mutations; `destructive` adds the rest. New tools MUST set `annotations` to one of the presets in [src/utils/annotations.ts](./src/utils/annotations.ts): `READ_ONLY` or `DESTRUCTIVE`. Do not bypass the proxy.
+A tool registers when its derived level is at or below `MCP_KB_FS_ACCESS_LEVEL` (default: `read`). Levels nest: `read` registers only readers; `write` adds non-destructive mutations (rename, mkdir); `destructive` adds the rest (overwrite, delete). New tools MUST set `annotations` to one of the presets in [src/utils/annotations.ts](./src/utils/annotations.ts): `READ_ONLY`, `WRITE`/`WRITE_IDEMPOTENT` (write tier — non-idempotent vs. retry-safe), or `DESTRUCTIVE`. Do not bypass the proxy.
 
 ## Security Requirements
 

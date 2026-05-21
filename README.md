@@ -12,18 +12,23 @@ An MCP (Model Context Protocol) server that gives Claude read and write access t
 - **Strict file types** — notes must end in `.md`; folder listings only return directories.
 - **No network, no auth** — pure local filesystem over MCP stdio.
 
-**Quality:** 72 tests at 100% coverage across statements, branches, functions, and lines.
+**Quality:** 118 tests at 100% coverage across statements, branches, functions, and lines.
 
 ## Available Tools
 
-Tools follow the convention `<app>_<resource>_<action>`. Each tool's access level (`read`, `write`, or `destructive`) is derived from its MCP annotations (`readOnlyHint` / `destructiveHint`). The registered surface is controlled by the `MCP_KB_FS_ACCESS_LEVEL` env var (defaults to `read`; levels nest, so `write` adds non-destructive mutations and `destructive` adds delete/overwrite). Tools above the configured level are silently skipped at registration.
+Tools follow the convention `<app>_<resource>_<action>`. Each tool declares an annotation preset (`READ_ONLY`, `WRITE`, `WRITE_IDEMPOTENT`, `DESTRUCTIVE`) which determines its access level (`read`, `write`, or `destructive`) via the underlying MCP hints (`readOnlyHint` / `destructiveHint`). The registered surface is controlled by the `MCP_KB_FS_ACCESS_LEVEL` env var (defaults to `read`; levels nest). Tools above the configured level are silently skipped at registration.
 
-| Tool              | Level         | Description                                                                 |
-| ----------------- | ------------- | --------------------------------------------------------------------------- |
-| `kb_note_read`    | `read`        | Read the full markdown content of a note by KB-relative path.               |
-| `kb_notes_list`   | `read`        | List `.md` files in a knowledge base directory; optional recursive descent. |
-| `kb_folders_list` | `read`        | List subfolders in a knowledge base directory; optional recursive descent.  |
-| `kb_note_write`   | `destructive` | Write or overwrite a note. Optionally creates parent dirs (`create_dirs`).  |
+| Tool               | Level         | Preset             | Description                                          |
+| ------------------ | ------------- | ------------------ | ---------------------------------------------------- |
+| `kb_note_read`     | `read`        | `READ_ONLY`        | Read the full markdown content of a note. †          |
+| `kb_notes_list`    | `read`        | `READ_ONLY`        | List `.md` files in a directory; optional recursion. |
+| `kb_folders_list`  | `read`        | `READ_ONLY`        | List subfolders in a directory; optional recursion.  |
+| `kb_note_rename`   | `write`       | `WRITE`            | Rename/move a note. Refuses to overwrite. ‡          |
+| `kb_folder_create` | `write`       | `WRITE_IDEMPOTENT` | Create a folder (`mkdir -p`); idempotent. §          |
+| `kb_note_write`    | `destructive` | `DESTRUCTIVE`      | Write or overwrite a note. ¶                         |
+| `kb_note_delete`   | `destructive` | `DESTRUCTIVE`      | Delete a note. `dry_run` defaults to `true`. ‖       |
+
+† Paths must be KB-relative and end in `.md`. Protected and traversal paths are rejected. ‡ Non-idempotent: a second call with the same `from` fails because the source has moved. § Idempotent: succeeds if the folder already exists. Fails if a regular file occupies the path. ¶ Optionally creates parent dirs (`create_dirs`, default `true`). `dry_run` defaults to `true`. ‖ Pass `dry_run: false` to actually unlink. Refuses to delete directories or protected paths.
 
 ### `kb_note_read`
 
@@ -77,6 +82,43 @@ Same input shape as `kb_notes_list`. Returns a newline-separated list of KB-rela
 ```
 
 `create_dirs` defaults to `true`. Returns `Written: "<path>" (<n> bytes)`. With `create_dirs: false` and a missing parent, returns `Directory not found for: "<path>" — set create_dirs: true to create it automatically`.
+
+### `kb_note_rename`
+
+```json
+{
+  "name": "kb_note_rename",
+  "arguments": {
+    "from": "Inbox/draft.md",
+    "to": "Pillars/Finance/Budget.md",
+    "create_dirs": true
+  }
+}
+```
+
+Non-destructive: refuses to overwrite an existing destination. Both paths must end in `.md`, pass the standard root/protected guards, and resolve to different absolute paths. `create_dirs` defaults to `true` (creates parents of `to` as needed). Returns `Renamed: "<from>" → "<to>"`. Errors: `Destination already exists: "<to>"`, `File not found: "<from>"`, the usual `Path escapes root` / `Path is protected`.
+
+### `kb_folder_create`
+
+```json
+{
+  "name": "kb_folder_create",
+  "arguments": { "path": "Pillars/Finance/2026" }
+}
+```
+
+`mkdir -p` semantics: creates intermediate folders as needed and is idempotent (re-running succeeds with `Folder already exists: "<path>"`). Fails with `Path exists as a file, not a folder` if a regular file already occupies the path. No `dry_run` — it's non-destructive.
+
+### `kb_note_delete`
+
+```json
+{
+  "name": "kb_note_delete",
+  "arguments": { "path": "Inbox/2026-04-30.md", "dry_run": false }
+}
+```
+
+`dry_run` defaults to `true` — the first call returns `[dry_run] would delete (<n> bytes): "<path>"` without touching the file. Pass `dry_run: false` to actually unlink. Returns `Deleted: "<path>" (<n> bytes)`. Errors: `File not found`, `Not a note file` (for directories), `Path escapes root`, `Path is protected`.
 
 ## Quick Start
 
@@ -134,7 +176,7 @@ bun install
 | Name | Required | Description |
 | --- | --- | --- |
 | `MCP_KB_FS_ROOT_PATH` | yes | Absolute path or `~/...` to the knowledge base root. The server asserts on startup. |
-| `MCP_KB_FS_ACCESS_LEVEL` | no | Maximum tool access level to register. One of: `read` (default — read-only tools only, least privilege), `write` (adds non-destructive mutations), `destructive` (adds delete/overwrite tools such as `kb_note_write`). Levels nest. Each tool's level is derived from its MCP annotations (`readOnlyHint: true` → `read`; `destructiveHint: true` → `destructive`; explicit `readOnlyHint: false` AND `destructiveHint: false` → `write`; missing annotations → `destructive` fail-safe); a tool registers when its derived level ≤ the configured level. The `dry_run: true` default on destructive tools controls _effect_; this gate controls _visibility_. An unknown value aborts startup. |
+| `MCP_KB_FS_ACCESS_LEVEL` | no | Maximum tool access level to register. One of: `read` (default — read-only tools only, least privilege), `write` (adds non-destructive mutations: `kb_note_rename`, `kb_folder_create`), `destructive` (adds overwrite/delete: `kb_note_write`, `kb_note_delete`). Levels nest. Each tool's level is derived from its MCP annotations (`readOnlyHint: true` → `read`; `destructiveHint: true` → `destructive`; explicit `readOnlyHint: false` AND `destructiveHint: false` → `write`; missing annotations → `destructive` fail-safe); a tool registers when its derived level ≤ the configured level. The `dry_run: true` default on destructive tools controls _effect_; this gate controls _visibility_. An unknown value aborts startup. |
 | `MCP_KB_FS_AUDIT_LOG` | no | Audit-log scope. One of `off`, `writes` (default — record only non-read tool calls), `all` (record every invocation). |
 | `MCP_KB_FS_AUDIT_LOG_PATH` | no | Path to the JSONL audit log. Default `~/.local/state/mcp-kb-fs/audit.jsonl`. |
 | `MCP_KB_FS_AUDIT_LOG_MAX_BYTES` | no | Size-based rotation threshold in bytes. Default `10485760` (10 MiB). Set to `0` to disable rotation. |

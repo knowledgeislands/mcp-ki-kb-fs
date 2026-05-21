@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { ROOT_PATH } from './config.js'
-import { listFolders, listNotes, readNote, writeNote } from './notes.js'
+import { createFolder, deleteNote, listFolders, listNotes, readNote, renameNote, writeNote } from './notes.js'
 
 beforeAll(async () => {
   await fs.mkdir(ROOT_PATH, { recursive: true })
@@ -64,6 +64,14 @@ describe('writeNote', () => {
     expect(result.content[0].text).toBe('[dry_run] would overwrite (5 → 18 bytes): "doc.md"')
     const onDisk = await fs.readFile(path.join(ROOT_PATH, 'doc.md'), 'utf-8')
     expect(onDisk).toBe('short')
+  })
+
+  it('dry_run rethrows non-ENOENT errors from the existence probe (e.g. ENOTDIR)', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'blocker.md'), 'x', 'utf-8')
+    // "blocker.md" is a file; "blocker.md/child.md" forces ENOTDIR from fs.stat.
+    const result = await writeNote({ path: 'blocker.md/child.md', content: 'y', create_dirs: false, dry_run: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Error writing note')
   })
 })
 
@@ -318,6 +326,212 @@ describe('path resolution hardening', () => {
     } finally {
       await fs.rm(outside, { recursive: true, force: true })
     }
+  })
+})
+
+describe('renameNote', () => {
+  it('renames a note to a new path', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'old.md'), 'content', 'utf-8')
+    const result = await renameNote({ from: 'old.md', to: 'new.md', create_dirs: true })
+    expect(result.content[0].text).toBe('Renamed: "old.md" → "new.md"')
+    await expect(fs.access(path.join(ROOT_PATH, 'old.md'))).rejects.toThrow()
+    expect(await fs.readFile(path.join(ROOT_PATH, 'new.md'), 'utf-8')).toBe('content')
+  })
+
+  it('moves a note into a subdirectory, creating it', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'top.md'), 'x', 'utf-8')
+    const result = await renameNote({ from: 'top.md', to: 'sub/nested.md', create_dirs: true })
+    expect(result.content[0].text).toBe('Renamed: "top.md" → "sub/nested.md"')
+    expect(await fs.readFile(path.join(ROOT_PATH, 'sub/nested.md'), 'utf-8')).toBe('x')
+  })
+
+  it('refuses to overwrite an existing destination', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'a.md'), 'a', 'utf-8')
+    await fs.writeFile(path.join(ROOT_PATH, 'b.md'), 'b', 'utf-8')
+    const result = await renameNote({ from: 'a.md', to: 'b.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Destination already exists: "b.md"')
+    expect(await fs.readFile(path.join(ROOT_PATH, 'a.md'), 'utf-8')).toBe('a')
+    expect(await fs.readFile(path.join(ROOT_PATH, 'b.md'), 'utf-8')).toBe('b')
+  })
+
+  it('returns a friendly error when the source is missing', async () => {
+    const result = await renameNote({ from: 'missing.md', to: 'new.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('File not found: "missing.md"')
+  })
+
+  it('rejects non-.md source', async () => {
+    const result = await renameNote({ from: 'a.txt', to: 'b.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Notes must end in ".md": "a.txt"')
+  })
+
+  it('rejects non-.md destination', async () => {
+    const result = await renameNote({ from: 'a.md', to: 'b.txt', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Notes must end in ".md": "b.txt"')
+  })
+
+  it('rejects path traversal in from', async () => {
+    const result = await renameNote({ from: '../escape.md', to: 'ok.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path escapes root')
+  })
+
+  it('rejects path traversal in to', async () => {
+    const result = await renameNote({ from: 'ok.md', to: '../escape.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path escapes root')
+  })
+
+  it('rejects protected destination (root README.md)', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'src.md'), 'x', 'utf-8')
+    const result = await renameNote({ from: 'src.md', to: 'README.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path is protected: "README.md"')
+  })
+
+  it('rejects protected source (root CLAUDE.md)', async () => {
+    const result = await renameNote({ from: 'CLAUDE.md', to: 'safe.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path is protected: "CLAUDE.md"')
+  })
+
+  it('rejects same source and destination', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'a.md'), 'x', 'utf-8')
+    const result = await renameNote({ from: 'a.md', to: 'a.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Rename source and destination are the same path')
+  })
+
+  it('rejects renaming a directory (not a file)', async () => {
+    await fs.mkdir(path.join(ROOT_PATH, 'dir.md'), { recursive: true })
+    const result = await renameNote({ from: 'dir.md', to: 'other.md', create_dirs: true })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Not a note file: "dir.md"')
+  })
+
+  it('fails when create_dirs is false and the destination parent is missing', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'src.md'), 'x', 'utf-8')
+    const result = await renameNote({ from: 'src.md', to: 'missing/dst.md', create_dirs: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('destination parent missing for "missing/dst.md"')
+    expect(result.content[0].text).toContain('set create_dirs: true')
+    expect(await fs.readFile(path.join(ROOT_PATH, 'src.md'), 'utf-8')).toBe('x')
+  })
+
+  it('rethrows non-ENOENT errors from the destination existence probe (e.g. ENOTDIR)', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'src.md'), 'x', 'utf-8')
+    await fs.writeFile(path.join(ROOT_PATH, 'blocker.md'), 'y', 'utf-8')
+    // "blocker.md" is a file; "blocker.md/child.md" forces ENOTDIR from fs.access.
+    const result = await renameNote({ from: 'src.md', to: 'blocker.md/child.md', create_dirs: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Error renaming note')
+  })
+})
+
+describe('deleteNote', () => {
+  it('dry_run previews deletion without removing the file', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'doomed.md'), 'bye', 'utf-8')
+    const result = await deleteNote({ path: 'doomed.md', dry_run: true })
+    expect(result.content[0].text).toBe('[dry_run] would delete (3 bytes): "doomed.md"')
+    expect(await fs.readFile(path.join(ROOT_PATH, 'doomed.md'), 'utf-8')).toBe('bye')
+  })
+
+  it('deletes a note when dry_run is false', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'goner.md'), 'gone', 'utf-8')
+    const result = await deleteNote({ path: 'goner.md', dry_run: false })
+    expect(result.content[0].text).toBe('Deleted: "goner.md" (4 bytes)')
+    await expect(fs.access(path.join(ROOT_PATH, 'goner.md'))).rejects.toThrow()
+  })
+
+  it('returns a friendly error when the file is missing', async () => {
+    const result = await deleteNote({ path: 'missing.md', dry_run: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('File not found: "missing.md"')
+  })
+
+  it('rejects non-.md paths', async () => {
+    const result = await deleteNote({ path: 'note.txt', dry_run: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Notes must end in ".md"')
+  })
+
+  it('rejects path traversal', async () => {
+    const result = await deleteNote({ path: '../escape.md', dry_run: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path escapes root')
+  })
+
+  it('refuses protected root README.md', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'README.md'), 'x', 'utf-8')
+    const result = await deleteNote({ path: 'README.md', dry_run: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path is protected')
+    expect(await fs.readFile(path.join(ROOT_PATH, 'README.md'), 'utf-8')).toBe('x')
+  })
+
+  it('refuses to delete a directory', async () => {
+    await fs.mkdir(path.join(ROOT_PATH, 'sub.md'), { recursive: true })
+    const result = await deleteNote({ path: 'sub.md', dry_run: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Not a note file: "sub.md"')
+  })
+})
+
+describe('createFolder', () => {
+  it('creates a new folder', async () => {
+    const result = await createFolder({ path: 'fresh' })
+    expect(result.content[0].text).toBe('Created folder: "fresh"')
+    const stat = await fs.stat(path.join(ROOT_PATH, 'fresh'))
+    expect(stat.isDirectory()).toBe(true)
+  })
+
+  it('creates nested folders (mkdir -p)', async () => {
+    const result = await createFolder({ path: 'a/b/c' })
+    expect(result.content[0].text).toBe('Created folder: "a/b/c"')
+    const stat = await fs.stat(path.join(ROOT_PATH, 'a/b/c'))
+    expect(stat.isDirectory()).toBe(true)
+  })
+
+  it('is idempotent — succeeds when the folder already exists', async () => {
+    await fs.mkdir(path.join(ROOT_PATH, 'already'), { recursive: true })
+    const result = await createFolder({ path: 'already' })
+    expect(result.content[0].text).toBe('Folder already exists: "already"')
+  })
+
+  it('refuses when the path exists as a file', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'a.md'), 'x', 'utf-8')
+    const result = await createFolder({ path: 'a.md' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path exists as a file, not a folder')
+  })
+
+  it('rejects empty path', async () => {
+    const result = await createFolder({ path: '' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Folder path must not be empty')
+  })
+
+  it('rejects path traversal', async () => {
+    const result = await createFolder({ path: '../escape' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path escapes root')
+  })
+
+  it('rejects protected dotdirs', async () => {
+    const result = await createFolder({ path: '.git' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path is protected')
+  })
+
+  it('rethrows non-ENOENT errors from the existence probe (e.g. ENOTDIR)', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'blocker.md'), 'x', 'utf-8')
+    // "blocker.md" is a file; "blocker.md/sub" forces ENOTDIR from fs.stat.
+    const result = await createFolder({ path: 'blocker.md/sub' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Error creating folder')
   })
 })
 

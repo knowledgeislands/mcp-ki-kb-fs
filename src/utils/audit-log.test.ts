@@ -110,6 +110,52 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
     const mode = (await fs.stat(logPath)).mode & 0o777
     expect(mode.toString(8)).toBe('600')
   })
+
+  it('truncates args when the serialized form exceeds MAX_ARG_CHARS', async () => {
+    const { withAuditLog } = await import('./audit-log.js')
+    const wrapped = withAuditLog('kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    // `content` gets redacted (short string), so use a different key with a huge value.
+    await wrapped({ huge: 'x'.repeat(5000) })
+    await new Promise((r) => setTimeout(r, 20))
+    const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
+    expect(event.args._truncated).toBe(true)
+    expect(typeof event.args.preview).toBe('string')
+  })
+
+  it('rotates the audit log when it exceeds MCP_KB_FS_AUDIT_LOG_MAX_BYTES (keeps history)', async () => {
+    process.env.MCP_KB_FS_AUDIT_LOG_MAX_BYTES = '100'
+    process.env.MCP_KB_FS_AUDIT_LOG_KEEP = '2'
+    const { withAuditLog } = await import('./audit-log.js')
+    const wrapped = withAuditLog('kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    // Write enough events to trigger multiple rotations.
+    for (let i = 0; i < 6; i++) await wrapped({ idx: i })
+    await new Promise((r) => setTimeout(r, 50))
+    await expect(fs.access(`${logPath}.1`)).resolves.toBeUndefined()
+    delete process.env.MCP_KB_FS_AUDIT_LOG_MAX_BYTES
+    delete process.env.MCP_KB_FS_AUDIT_LOG_KEEP
+  })
+
+  it('rotates by truncating the log when KEEP=0 (no history)', async () => {
+    process.env.MCP_KB_FS_AUDIT_LOG_MAX_BYTES = '100'
+    process.env.MCP_KB_FS_AUDIT_LOG_KEEP = '0'
+    const { withAuditLog } = await import('./audit-log.js')
+    const wrapped = withAuditLog('kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    for (let i = 0; i < 6; i++) await wrapped({ idx: i })
+    await new Promise((r) => setTimeout(r, 50))
+    // No `.1` rotation file when KEEP=0.
+    await expect(fs.access(`${logPath}.1`)).rejects.toThrow()
+    delete process.env.MCP_KB_FS_AUDIT_LOG_MAX_BYTES
+    delete process.env.MCP_KB_FS_AUDIT_LOG_KEEP
+  })
+
+  it('swallows appendFile failures (e.g. path is a directory) without throwing', async () => {
+    // Make the log path a directory so appendFile fails with EISDIR.
+    await fs.mkdir(logPath, { recursive: true })
+    const { withAuditLog } = await import('./audit-log.js')
+    const wrapped = withAuditLog('kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    // Should NOT throw — appendAuditEvent catches all write errors.
+    await expect(wrapped({})).resolves.toBeDefined()
+  })
 })
 
 describe('levelFromAnnotations / makeAccessGatedRegister (mcp-kb-fs)', () => {
@@ -159,9 +205,9 @@ describe('levelFromAnnotations / makeAccessGatedRegister (mcp-kb-fs)', () => {
     const registerTool = vi.fn()
     const fakeServer = { registerTool } as unknown as Parameters<typeof makeAccessGatedRegister>[0]
     const gated = makeAccessGatedRegister(fakeServer)
-    const ADDITIVE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const
+    const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const
     gated('kb_note_read', { title: 't', description: 'd', annotations: READ_ONLY } as never, (async () => ({ content: [] })) as never)
-    gated('kb_note_add', { title: 't', description: 'd', annotations: ADDITIVE } as never, (async () => ({ content: [] })) as never)
+    gated('kb_note_add', { title: 't', description: 'd', annotations: WRITE } as never, (async () => ({ content: [] })) as never)
     gated('kb_note_delete', { title: 't', description: 'd', annotations: DESTRUCTIVE } as never, (async () => ({ content: [] })) as never)
     expect(registerTool).toHaveBeenCalledTimes(2)
     expect((registerTool.mock.calls[0] as unknown[])[0]).toBe('kb_note_read')

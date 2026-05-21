@@ -79,6 +79,132 @@ export const listFolders = async ({ path: dirPath, recursive }: { path: string; 
   }
 }
 
+export const renameNote = async ({ from, to, create_dirs }: { from: string; to: string; create_dirs: boolean }) => {
+  if (!isNote(from)) {
+    return errorResult(`Notes must end in "${NOTE_EXT}": "${from}"`)
+  }
+  if (!isNote(to)) {
+    return errorResult(`Notes must end in "${NOTE_EXT}": "${to}"`)
+  }
+  try {
+    const absFrom = resolveWithinRoot(ROOT_PATH, from)
+    const absTo = resolveWithinRoot(ROOT_PATH, to)
+    if (isProtectedPath(relativeFromRoot(absFrom))) {
+      return errorResult(`Path is protected: "${from}"`)
+    }
+    if (isProtectedPath(relativeFromRoot(absTo))) {
+      return errorResult(`Path is protected: "${to}"`)
+    }
+    if (absFrom === absTo) {
+      return errorResult(`Rename source and destination are the same path: "${from}"`)
+    }
+    await assertRealPathWithinRoot(ROOT_PATH, absFrom)
+    const fromStat = await fs.stat(absFrom)
+    if (!fromStat.isFile()) {
+      return errorResult(`Not a note file: "${from}"`)
+    }
+    if (create_dirs) {
+      await fs.mkdir(path.dirname(absTo), { recursive: true })
+    }
+    await assertRealPathWithinRoot(ROOT_PATH, absTo)
+    try {
+      await fs.access(absTo)
+      return errorResult(`Destination already exists: "${to}" — refusing to overwrite (rename is non-destructive)`)
+    } catch (err) {
+      if (!(isNodeError(err) && err.code === 'ENOENT')) throw err
+    }
+    await fs.rename(absFrom, absTo)
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Renamed: "${from}" → "${to}"`
+        }
+      ]
+    }
+  } catch (err) {
+    if (isNodeError(err) && err.code === 'ENOENT') {
+      return errorResult(`File not found: "${from}" (root: ${ROOT_PATH}) — or destination parent missing for "${to}" (set create_dirs: true)`)
+    }
+    return errorResult(`Error renaming note: ${errMessage(err)}`)
+  }
+}
+
+export const deleteNote = async ({ path: notePath, dry_run }: { path: string; dry_run: boolean }) => {
+  if (!isNote(notePath)) {
+    return errorResult(`Notes must end in "${NOTE_EXT}": "${notePath}"`)
+  }
+  try {
+    const absPath = resolveWithinRoot(ROOT_PATH, notePath)
+    if (isProtectedPath(relativeFromRoot(absPath))) {
+      return errorResult(`Path is protected: "${notePath}"`)
+    }
+    await assertRealPathWithinRoot(ROOT_PATH, absPath)
+    const stat = await fs.stat(absPath)
+    if (!stat.isFile()) {
+      return errorResult(`Not a note file: "${notePath}"`)
+    }
+    if (dry_run) {
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: `[dry_run] would delete (${stat.size} bytes): "${notePath}"`
+          }
+        ]
+      }
+    }
+    await fs.unlink(absPath)
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Deleted: "${notePath}" (${stat.size} bytes)`
+        }
+      ]
+    }
+  } catch (err) {
+    if (isNodeError(err) && err.code === 'ENOENT') {
+      return errorResult(`File not found: "${notePath}" (root: ${ROOT_PATH})`)
+    }
+    return errorResult(`Error deleting note: ${errMessage(err)}`)
+  }
+}
+
+export const createFolder = async ({ path: dirPath }: { path: string }) => {
+  if (!dirPath) {
+    return errorResult('Folder path must not be empty')
+  }
+  try {
+    const absDir = resolveWithinRoot(ROOT_PATH, dirPath)
+    if (isProtectedPath(relativeFromRoot(absDir))) {
+      return errorResult(`Path is protected: "${dirPath}"`)
+    }
+    await assertRealPathWithinRoot(ROOT_PATH, absDir)
+    let existed = false
+    try {
+      const stat = await fs.stat(absDir)
+      if (stat.isFile()) {
+        return errorResult(`Path exists as a file, not a folder: "${dirPath}"`)
+      }
+      existed = stat.isDirectory()
+    } catch (err) {
+      if (!(isNodeError(err) && err.code === 'ENOENT')) throw err
+    }
+    await fs.mkdir(absDir, { recursive: true })
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: existed ? `Folder already exists: "${dirPath}"` : `Created folder: "${dirPath}"`
+        }
+      ]
+    }
+  } catch (err) {
+    return errorResult(`Error creating folder: ${errMessage(err)}`)
+  }
+}
+
 export const writeNote = async ({ path: notePath, content, create_dirs, dry_run }: { path: string; content: string; create_dirs: boolean; dry_run: boolean }) => {
   if (!isNote(notePath)) {
     return errorResult(`Notes must end in "${NOTE_EXT}": "${notePath}"`)
