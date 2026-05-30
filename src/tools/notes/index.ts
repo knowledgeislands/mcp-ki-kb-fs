@@ -1,9 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import * as notes from '../../notes.js'
+import type { Config } from '../../config/index.js'
+import * as notes from '../../main/notes/index.js'
 import { DESTRUCTIVE, READ_ONLY, WRITE, WRITE_IDEMPOTENT } from '../../utils/annotations.js'
 
-export const registerNotesTools = (server: McpServer): void => {
+export const registerNotesTools = (server: McpServer, cfg: Config): void => {
   server.registerTool(
     'kb_note_read',
     {
@@ -27,7 +28,7 @@ Errors:
         .strict(),
       annotations: READ_ONLY
     },
-    notes.readNote
+    (args) => notes.readNote(cfg, args)
   )
 
   server.registerTool(
@@ -50,7 +51,7 @@ Returns:
         .strict(),
       annotations: READ_ONLY
     },
-    notes.listNotes
+    (args) => notes.listNotes(cfg, args)
   )
 
   server.registerTool(
@@ -73,7 +74,7 @@ Returns:
         .strict(),
       annotations: READ_ONLY
     },
-    notes.listFolders
+    (args) => notes.listFolders(cfg, args)
   )
 
   server.registerTool(
@@ -105,7 +106,7 @@ Errors:
         .strict(),
       annotations: DESTRUCTIVE
     },
-    notes.writeNote
+    (args) => notes.writeNote(cfg, args)
   )
 
   server.registerTool(
@@ -137,7 +138,7 @@ Errors:
         .strict(),
       annotations: WRITE
     },
-    notes.renameNote
+    (args) => notes.renameNote(cfg, args)
   )
 
   server.registerTool(
@@ -163,7 +164,7 @@ Errors:
         .strict(),
       annotations: WRITE_IDEMPOTENT
     },
-    notes.createFolder
+    (args) => notes.createFolder(cfg, args)
   )
 
   server.registerTool(
@@ -192,6 +193,6 @@ Errors:
         .strict(),
       annotations: DESTRUCTIVE
     },
-    notes.deleteNote
+    (args) => notes.deleteNote(cfg, args)
   )
 }

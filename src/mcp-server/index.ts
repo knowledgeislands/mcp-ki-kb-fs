@@ -14,14 +14,16 @@
 import * as fs from 'node:fs/promises'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { ACCESS_LEVEL, AUDIT_LOG_MODE, AUDIT_LOG_PATH, ROOT_PATH } from '../config.js'
+import { loadConfig } from '../config/index.js'
 import { registerNotesTools } from '../tools/index.js'
 import { makeAccessGatedRegister } from '../utils/access-level.js'
 
+const config = loadConfig()
+
 console.error(`mcp-kb-fs starting...`)
-console.error(`  MCP_KB_FS_ACCESS_LEVEL=${ACCESS_LEVEL}`)
-console.error(`  MCP_KB_FS_ROOT_PATH=${ROOT_PATH}`)
-console.error(`  MCP_KB_FS_AUDIT_LOG=${AUDIT_LOG_MODE}${AUDIT_LOG_MODE === 'off' ? '' : ` (path: ${AUDIT_LOG_PATH})`}`)
+console.error(`  MCP_KB_FS_ACCESS_LEVEL=${config.accessLevel}`)
+console.error(`  MCP_KB_FS_ROOT_PATH=${config.rootPath}`)
+console.error(`  MCP_KB_FS_AUDIT_LOG=${config.auditLogMode}${config.auditLogMode === 'off' ? '' : ` (path: ${config.auditLogPath})`}`)
 
 const server = new McpServer({
   name: 'mcp-kb-fs',
@@ -31,15 +33,20 @@ const server = new McpServer({
 // Monkey-patch registerTool so every tool's callback is wrapped with the
 // audit logger. Done in-place rather than passing a wrapped reference because
 // registerNotesTools calls server.registerTool directly.
-server.registerTool = makeAccessGatedRegister(server)
+server.registerTool = makeAccessGatedRegister(server, config.accessLevel, {
+  mode: config.auditLogMode,
+  path: config.auditLogPath,
+  maxBytes: config.auditLogMaxBytes,
+  keep: config.auditLogKeep
+})
 
-registerNotesTools(server)
+registerNotesTools(server, config)
 
 const main = async (): Promise<void> => {
   try {
-    await fs.access(ROOT_PATH)
+    await fs.access(config.rootPath)
   } catch {
-    console.error(`mcp-kb-fs: MCP_KB_FS_ROOT_PATH not accessible: ${ROOT_PATH}\nSet MCP_KB_FS_ROOT_PATH to the correct path and restart.`)
+    console.error(`mcp-kb-fs: MCP_KB_FS_ROOT_PATH not accessible: ${config.rootPath}\nSet MCP_KB_FS_ROOT_PATH to the correct path and restart.`)
     return
   }
 

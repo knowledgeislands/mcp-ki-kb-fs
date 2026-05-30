@@ -20,9 +20,9 @@ You should expect an acknowledgement within 72 hours. We aim to triage, investig
 
 In scope:
 
-- Path containment in `src/utils.ts` (`resolveWithinRoot`) — any input that resolves outside `MCP_KB_FS_ROOT_PATH` (traversal, symlink escape, encoded separators, edge cases around trailing slashes).
-- Tool handlers in `src/notes.ts` — `kb_read_note`, `kb_list_notes`, and the destructive `kb_write_note` (including `create_dirs` behaviour).
-- Boot-time root validation in `src/config.ts`.
+- Path containment in `src/utils/utils.ts` (`resolveWithinRoot` + `assertRealPathWithinRoot`) — any input that resolves outside `MCP_KB_FS_ROOT_PATH` (traversal, symlink escape, encoded separators, edge cases around trailing slashes).
+- Note operations in `src/main/notes/index.ts` — `kb_note_read`, `kb_notes_list`, and the destructive `kb_note_write` (including `create_dirs` behaviour).
+- Config / boot-time root validation in `src/config/index.ts` (`loadConfig`).
 
 Out of scope:
 

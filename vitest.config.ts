@@ -1,8 +1,4 @@
-import * as os from 'node:os'
-import * as path from 'node:path'
 import { defineConfig } from 'vitest/config'
-
-const TEST_ROOT = path.join(os.tmpdir(), 'knowledgeislands-tests')
 
 export default defineConfig({
   test: {
@@ -10,9 +6,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     fileParallelism: false,
-    env: {
-      MCP_KB_FS_ROOT_PATH: TEST_ROOT
-    },
+    // No env seeding needed: config is loaded explicitly via loadConfig() and
+    // passed into calls, so nothing reads process.env at import time. Tests
+    // build their own Config (or call loadConfig with an explicit env object).
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],

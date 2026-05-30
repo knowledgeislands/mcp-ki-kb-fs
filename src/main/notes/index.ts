@@ -1,26 +1,36 @@
+/**
+ * The KB note/folder operations — read / list / write / rename / delete /
+ * create-folder — as implementation functions. The tool handlers
+ * (src/tools/notes/index.ts) are thin wrappers that call one of these. Keeping
+ * the logic here (not in the excluded aggregator) makes every branch
+ * unit-testable against a real temp KB root.
+ *
+ * Every entry point takes `Config` as its first argument — the KB root and all
+ * other settings are injected, never read from a module singleton.
+ */
 import type { Dirent } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { ROOT_PATH } from './config.js'
-import { isProtectedPath } from './protected.js'
-import { assertRealPathWithinRoot, errorResult, isNodeError, resolveWithinRoot } from './utils/utils.js'
+import type { Config } from '../../config/index.js'
+import { isProtectedPath } from '../../utils/protected.js'
+import { assertRealPathWithinRoot, errorResult, isNodeError, resolveWithinRoot } from '../../utils/utils.js'
 
 const NOTE_EXT = '.md'
 
 const isNote = (basename: string): boolean => basename.endsWith(NOTE_EXT)
 
-const relativeFromRoot = (absPath: string): string => path.relative(ROOT_PATH, absPath)
+const relativeFromRoot = (rootPath: string, absPath: string): string => path.relative(rootPath, absPath)
 
-export const readNote = async ({ path: notePath }: { path: string }) => {
+export const readNote = async (cfg: Config, { path: notePath }: { path: string }) => {
   if (!isNote(notePath)) {
     return errorResult('reading note', new Error(`Notes must end in "${NOTE_EXT}": "${notePath}"`))
   }
   try {
-    const absPath = resolveWithinRoot(ROOT_PATH, notePath)
-    if (isProtectedPath(relativeFromRoot(absPath))) {
+    const absPath = resolveWithinRoot(cfg.rootPath, notePath)
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absPath))) {
       return errorResult('reading note', new Error(`Path is protected: "${notePath}"`))
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absPath)
+    await assertRealPathWithinRoot(cfg.rootPath, absPath)
     const stat = await fs.stat(absPath)
     if (!stat.isFile()) {
       return errorResult('reading note', new Error(`Not a note file: "${notePath}"`))
@@ -29,21 +39,21 @@ export const readNote = async ({ path: notePath }: { path: string }) => {
     return { content: [{ type: 'text' as const, text: content }] }
   } catch (err) {
     if (isNodeError(err) && err.code === 'ENOENT') {
-      return errorResult('reading note', new Error(`File not found: "${notePath}" (root: ${ROOT_PATH})`))
+      return errorResult('reading note', new Error(`File not found: "${notePath}" (root: ${cfg.rootPath})`))
     }
     return errorResult('reading note', err)
   }
 }
 
-export const listNotes = async ({ path: dirPath, recursive }: { path: string; recursive: boolean }) => {
+export const listNotes = async (cfg: Config, { path: dirPath, recursive }: { path: string; recursive: boolean }) => {
   try {
-    const absDir = dirPath ? resolveWithinRoot(ROOT_PATH, dirPath) : ROOT_PATH
-    if (isProtectedPath(relativeFromRoot(absDir))) {
+    const absDir = dirPath ? resolveWithinRoot(cfg.rootPath, dirPath) : cfg.rootPath
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absDir))) {
       return errorResult('listing notes', new Error(`Path is protected: "${dirPath}"`))
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absDir)
-    const notes = await collectNotes(absDir, recursive)
-    const relative = notes.map((p) => path.relative(ROOT_PATH, p))
+    await assertRealPathWithinRoot(cfg.rootPath, absDir)
+    const notes = await collectNotes(cfg.rootPath, absDir, recursive)
+    const relative = notes.map((p) => path.relative(cfg.rootPath, p))
     return {
       content: [
         {
@@ -57,15 +67,15 @@ export const listNotes = async ({ path: dirPath, recursive }: { path: string; re
   }
 }
 
-export const listFolders = async ({ path: dirPath, recursive }: { path: string; recursive: boolean }) => {
+export const listFolders = async (cfg: Config, { path: dirPath, recursive }: { path: string; recursive: boolean }) => {
   try {
-    const absDir = dirPath ? resolveWithinRoot(ROOT_PATH, dirPath) : ROOT_PATH
-    if (isProtectedPath(relativeFromRoot(absDir))) {
+    const absDir = dirPath ? resolveWithinRoot(cfg.rootPath, dirPath) : cfg.rootPath
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absDir))) {
       return errorResult('listing folders', new Error(`Path is protected: "${dirPath}"`))
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absDir)
-    const folders = await collectFolders(absDir, recursive)
-    const relative = folders.map((p) => path.relative(ROOT_PATH, p))
+    await assertRealPathWithinRoot(cfg.rootPath, absDir)
+    const folders = await collectFolders(cfg.rootPath, absDir, recursive)
+    const relative = folders.map((p) => path.relative(cfg.rootPath, p))
     return {
       content: [
         {
@@ -79,7 +89,7 @@ export const listFolders = async ({ path: dirPath, recursive }: { path: string; 
   }
 }
 
-export const renameNote = async ({ from, to, create_dirs }: { from: string; to: string; create_dirs: boolean }) => {
+export const renameNote = async (cfg: Config, { from, to, create_dirs }: { from: string; to: string; create_dirs: boolean }) => {
   if (!isNote(from)) {
     return errorResult('renaming note', new Error(`Notes must end in "${NOTE_EXT}": "${from}"`))
   }
@@ -87,18 +97,18 @@ export const renameNote = async ({ from, to, create_dirs }: { from: string; to: 
     return errorResult('renaming note', new Error(`Notes must end in "${NOTE_EXT}": "${to}"`))
   }
   try {
-    const absFrom = resolveWithinRoot(ROOT_PATH, from)
-    const absTo = resolveWithinRoot(ROOT_PATH, to)
-    if (isProtectedPath(relativeFromRoot(absFrom))) {
+    const absFrom = resolveWithinRoot(cfg.rootPath, from)
+    const absTo = resolveWithinRoot(cfg.rootPath, to)
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absFrom))) {
       return errorResult('renaming note', new Error(`Path is protected: "${from}"`))
     }
-    if (isProtectedPath(relativeFromRoot(absTo))) {
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absTo))) {
       return errorResult('renaming note', new Error(`Path is protected: "${to}"`))
     }
     if (absFrom === absTo) {
       return errorResult('renaming note', new Error(`Rename source and destination are the same path: "${from}"`))
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absFrom)
+    await assertRealPathWithinRoot(cfg.rootPath, absFrom)
     const fromStat = await fs.stat(absFrom)
     if (!fromStat.isFile()) {
       return errorResult('renaming note', new Error(`Not a note file: "${from}"`))
@@ -106,7 +116,7 @@ export const renameNote = async ({ from, to, create_dirs }: { from: string; to: 
     if (create_dirs) {
       await fs.mkdir(path.dirname(absTo), { recursive: true })
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absTo)
+    await assertRealPathWithinRoot(cfg.rootPath, absTo)
     try {
       await fs.access(absTo)
       return errorResult('renaming note', new Error(`Destination already exists: "${to}" — refusing to overwrite (rename is non-destructive)`))
@@ -124,22 +134,22 @@ export const renameNote = async ({ from, to, create_dirs }: { from: string; to: 
     }
   } catch (err) {
     if (isNodeError(err) && err.code === 'ENOENT') {
-      return errorResult('renaming note', new Error(`File not found: "${from}" (root: ${ROOT_PATH}) — or destination parent missing for "${to}" (set create_dirs: true)`))
+      return errorResult('renaming note', new Error(`File not found: "${from}" (root: ${cfg.rootPath}) — or destination parent missing for "${to}" (set create_dirs: true)`))
     }
     return errorResult('renaming note', err)
   }
 }
 
-export const deleteNote = async ({ path: notePath, dry_run }: { path: string; dry_run: boolean }) => {
+export const deleteNote = async (cfg: Config, { path: notePath, dry_run }: { path: string; dry_run: boolean }) => {
   if (!isNote(notePath)) {
     return errorResult('deleting note', new Error(`Notes must end in "${NOTE_EXT}": "${notePath}"`))
   }
   try {
-    const absPath = resolveWithinRoot(ROOT_PATH, notePath)
-    if (isProtectedPath(relativeFromRoot(absPath))) {
+    const absPath = resolveWithinRoot(cfg.rootPath, notePath)
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absPath))) {
       return errorResult('deleting note', new Error(`Path is protected: "${notePath}"`))
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absPath)
+    await assertRealPathWithinRoot(cfg.rootPath, absPath)
     const stat = await fs.stat(absPath)
     if (!stat.isFile()) {
       return errorResult('deleting note', new Error(`Not a note file: "${notePath}"`))
@@ -165,22 +175,22 @@ export const deleteNote = async ({ path: notePath, dry_run }: { path: string; dr
     }
   } catch (err) {
     if (isNodeError(err) && err.code === 'ENOENT') {
-      return errorResult('deleting note', new Error(`File not found: "${notePath}" (root: ${ROOT_PATH})`))
+      return errorResult('deleting note', new Error(`File not found: "${notePath}" (root: ${cfg.rootPath})`))
     }
     return errorResult('deleting note', err)
   }
 }
 
-export const createFolder = async ({ path: dirPath }: { path: string }) => {
+export const createFolder = async (cfg: Config, { path: dirPath }: { path: string }) => {
   if (!dirPath) {
     return errorResult('creating folder', new Error('Folder path must not be empty'))
   }
   try {
-    const absDir = resolveWithinRoot(ROOT_PATH, dirPath)
-    if (isProtectedPath(relativeFromRoot(absDir))) {
+    const absDir = resolveWithinRoot(cfg.rootPath, dirPath)
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absDir))) {
       return errorResult('creating folder', new Error(`Path is protected: "${dirPath}"`))
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absDir)
+    await assertRealPathWithinRoot(cfg.rootPath, absDir)
     let existed = false
     try {
       const stat = await fs.stat(absDir)
@@ -205,19 +215,19 @@ export const createFolder = async ({ path: dirPath }: { path: string }) => {
   }
 }
 
-export const writeNote = async ({ path: notePath, content, create_dirs, dry_run }: { path: string; content: string; create_dirs: boolean; dry_run: boolean }) => {
+export const writeNote = async (cfg: Config, { path: notePath, content, create_dirs, dry_run }: { path: string; content: string; create_dirs: boolean; dry_run: boolean }) => {
   if (!isNote(notePath)) {
     return errorResult('writing note', new Error(`Notes must end in "${NOTE_EXT}": "${notePath}"`))
   }
   try {
-    const absPath = resolveWithinRoot(ROOT_PATH, notePath)
-    if (isProtectedPath(relativeFromRoot(absPath))) {
+    const absPath = resolveWithinRoot(cfg.rootPath, notePath)
+    if (isProtectedPath(relativeFromRoot(cfg.rootPath, absPath))) {
       return errorResult('writing note', new Error(`Path is protected: "${notePath}"`))
     }
     if (create_dirs && !dry_run) {
       await fs.mkdir(path.dirname(absPath), { recursive: true })
     }
-    await assertRealPathWithinRoot(ROOT_PATH, absPath)
+    await assertRealPathWithinRoot(cfg.rootPath, absPath)
     const bytes = Buffer.byteLength(content, 'utf-8')
     if (dry_run) {
       let exists = false
@@ -256,25 +266,25 @@ export const writeNote = async ({ path: notePath, content, create_dirs, dry_run 
   }
 }
 
-const readEntries = async (dir: string): Promise<Dirent[]> => {
+const readEntries = async (rootPath: string, dir: string): Promise<Dirent[]> => {
   try {
     return (await fs.readdir(dir, { withFileTypes: true, encoding: 'utf-8' })) as Dirent[]
   } catch (err) {
     if (isNodeError(err) && err.code === 'ENOENT') {
-      throw new Error(`Directory not found: "${path.relative(ROOT_PATH, dir)}"`)
+      throw new Error(`Directory not found: "${path.relative(rootPath, dir)}"`)
     }
     throw err
   }
 }
 
-const collectNotes = async (dir: string, recursive: boolean): Promise<string[]> => {
-  const entries = await readEntries(dir)
+const collectNotes = async (rootPath: string, dir: string, recursive: boolean): Promise<string[]> => {
+  const entries = await readEntries(rootPath, dir)
   const results: string[] = []
   for (const entry of entries) {
     const full = path.join(dir, entry.name)
-    if (isProtectedPath(relativeFromRoot(full))) continue
+    if (isProtectedPath(relativeFromRoot(rootPath, full))) continue
     if (entry.isDirectory()) {
-      if (recursive) results.push(...(await collectNotes(full, true)))
+      if (recursive) results.push(...(await collectNotes(rootPath, full, true)))
     } else if (entry.isFile() && isNote(entry.name)) {
       results.push(full)
     }
@@ -282,16 +292,16 @@ const collectNotes = async (dir: string, recursive: boolean): Promise<string[]> 
   return results
 }
 
-const collectFolders = async (dir: string, recursive: boolean): Promise<string[]> => {
-  const entries = await readEntries(dir)
+const collectFolders = async (rootPath: string, dir: string, recursive: boolean): Promise<string[]> => {
+  const entries = await readEntries(rootPath, dir)
   const results: string[] = []
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
     const full = path.join(dir, entry.name)
-    if (isProtectedPath(relativeFromRoot(full))) continue
+    if (isProtectedPath(relativeFromRoot(rootPath, full))) continue
     results.push(full)
     if (recursive) {
-      results.push(...(await collectFolders(full, true)))
+      results.push(...(await collectFolders(rootPath, full, true)))
     }
   }
   return results
