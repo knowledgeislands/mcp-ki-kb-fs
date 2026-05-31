@@ -8,6 +8,7 @@
  * Every entry point takes `Config` as its first argument — the KB root and all
  * other settings are injected, never read from a module singleton.
  */
+import { randomUUID } from 'node:crypto'
 import type { Dirent } from 'node:fs'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -113,10 +114,12 @@ export const renameNote = async (cfg: Config, { from, to, create_dirs }: { from:
     if (!fromStat.isFile()) {
       return errorResult('renaming note', new Error(`Not a note file: "${from}"`))
     }
+    // Realpath-guard the destination BEFORE creating any directory — a symlinked
+    // ancestor must be caught before `mkdir -p` can materialise dirs at its target.
+    await assertRealPathWithinRoot(cfg.rootPath, absTo)
     if (create_dirs) {
       await fs.mkdir(path.dirname(absTo), { recursive: true })
     }
-    await assertRealPathWithinRoot(cfg.rootPath, absTo)
     try {
       await fs.access(absTo)
       return errorResult('renaming note', new Error(`Destination already exists: "${to}" — refusing to overwrite (rename is non-destructive)`))
@@ -224,10 +227,12 @@ export const writeNote = async (cfg: Config, { path: notePath, content, create_d
     if (isProtectedPath(relativeFromRoot(cfg.rootPath, absPath))) {
       return errorResult('writing note', new Error(`Path is protected: "${notePath}"`))
     }
+    // Realpath-guard BEFORE creating any directory — a symlinked ancestor must be
+    // caught before `mkdir -p` can materialise dirs at its target.
+    await assertRealPathWithinRoot(cfg.rootPath, absPath)
     if (create_dirs && !dry_run) {
       await fs.mkdir(path.dirname(absPath), { recursive: true })
     }
-    await assertRealPathWithinRoot(cfg.rootPath, absPath)
     const bytes = Buffer.byteLength(content, 'utf-8')
     if (dry_run) {
       let exists = false
@@ -249,7 +254,11 @@ export const writeNote = async (cfg: Config, { path: notePath, content, create_d
         ]
       }
     }
-    await fs.writeFile(absPath, content, 'utf-8')
+    // Atomic write: write a sibling temp file then rename over the target, so a
+    // crash mid-write can't leave a note half-rewritten. rename() is atomic within a dir.
+    const tmpPath = `${absPath}.${randomUUID()}.tmp`
+    await fs.writeFile(tmpPath, content, 'utf-8')
+    await fs.rename(tmpPath, absPath)
     return {
       content: [
         {

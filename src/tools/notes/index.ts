@@ -4,6 +4,14 @@ import type { Config } from '../../config/index.js'
 import * as notes from '../../main/notes/index.js'
 import { DESTRUCTIVE, READ_ONLY, WRITE, WRITE_IDEMPOTENT } from '../../utils/annotations.js'
 
+// Schema-level traversal rejection — defense-in-depth ahead of the main/ layer's
+// two-layer guard (lexical + realpath). Rejects "..", absolute, and "~"-rooted
+// inputs before they reach the filesystem; "/" separators (subfolders) stay valid.
+const NO_TRAVERSAL_MSG = 'Path must be KB-relative: no ".." segments, leading "/", or "~" prefix'
+const isKbRelative = (p: string): boolean => !p.split(/[\\/]/).includes('..') && !p.startsWith('/') && !p.startsWith('~') && !p.includes('\0')
+const notePathArg = (describe: string) => z.string().min(1, 'Path must not be empty').max(4096).refine(isKbRelative, NO_TRAVERSAL_MSG).describe(describe)
+const dirPathArg = (describe: string) => z.string().max(4096).refine(isKbRelative, NO_TRAVERSAL_MSG).default('').describe(describe)
+
 export const registerNotesTools = (server: McpServer, cfg: Config): void => {
   server.registerTool(
     'kb_note_read',
@@ -23,7 +31,7 @@ Errors:
   - "Path escapes root" when the path attempts directory traversal.`,
       inputSchema: z
         .object({
-          path: z.string().min(1, 'Path must not be empty').describe('KB-relative path to the note, e.g. "Pillars/Finance/Budget.md"')
+          path: notePathArg('KB-relative path to the note, e.g. "Pillars/Finance/Budget.md"')
         })
         .strict(),
       annotations: READ_ONLY
@@ -45,7 +53,7 @@ Returns:
   Newline-separated list of KB-relative paths to .md files found.`,
       inputSchema: z
         .object({
-          path: z.string().default('').describe('KB-relative directory path. Empty string lists the knowledge base root.'),
+          path: dirPathArg('KB-relative directory path. Empty string lists the knowledge base root.'),
           recursive: z.boolean().default(false).describe('Descend into subdirectories when true.')
         })
         .strict(),
@@ -68,7 +76,7 @@ Returns:
   Newline-separated list of KB-relative folder paths found.`,
       inputSchema: z
         .object({
-          path: z.string().default('').describe('KB-relative directory path. Empty string lists the knowledge base root.'),
+          path: dirPathArg('KB-relative directory path. Empty string lists the knowledge base root.'),
           recursive: z.boolean().default(false).describe('Descend into subdirectories when true.')
         })
         .strict(),
@@ -98,8 +106,11 @@ Errors:
   - "Directory not found" when create_dirs is false and the parent directory does not exist.`,
       inputSchema: z
         .object({
-          path: z.string().min(1, 'Path must not be empty').describe('KB-relative path to the note, e.g. "CLAUDE.md"'),
-          content: z.string().describe('Full markdown content to write to the file.'),
+          path: notePathArg('KB-relative path to the note, e.g. "CLAUDE.md"'),
+          content: z
+            .string()
+            .max(10 * 1024 * 1024)
+            .describe('Full markdown content to write to the file.'),
           create_dirs: z.boolean().default(true).describe('Create parent directories if they do not exist. Default true.'),
           dry_run: z.boolean().default(true).describe('Preview only; do not write. Default true — pass false to actually write.')
         })
@@ -131,8 +142,8 @@ Errors:
   - "Path escapes root" / "Path is protected" — standard guards on both paths.`,
       inputSchema: z
         .object({
-          from: z.string().min(1, 'from must not be empty').describe('Current KB-relative path of the note, e.g. "Inbox/draft.md"'),
-          to: z.string().min(1, 'to must not be empty').describe('New KB-relative path for the note, e.g. "Pillars/Finance/Budget.md"'),
+          from: notePathArg('Current KB-relative path of the note, e.g. "Inbox/draft.md"'),
+          to: notePathArg('New KB-relative path for the note, e.g. "Pillars/Finance/Budget.md"'),
           create_dirs: z.boolean().default(true).describe('Create parent directories of the destination if they do not exist. Default true.')
         })
         .strict(),
@@ -159,7 +170,7 @@ Errors:
   - "Path escapes root" / "Path is protected" — standard guards.`,
       inputSchema: z
         .object({
-          path: z.string().min(1, 'Path must not be empty').describe('KB-relative folder path to create, e.g. "Pillars/Finance/2026"')
+          path: notePathArg('KB-relative folder path to create, e.g. "Pillars/Finance/2026"')
         })
         .strict(),
       annotations: WRITE_IDEMPOTENT
@@ -187,7 +198,7 @@ Errors:
   - "Path escapes root" / "Path is protected" — standard guards.`,
       inputSchema: z
         .object({
-          path: z.string().min(1, 'Path must not be empty').describe('KB-relative path of the note to delete, e.g. "Inbox/2026-04-30.md"'),
+          path: notePathArg('KB-relative path of the note to delete, e.g. "Inbox/2026-04-30.md"'),
           dry_run: z.boolean().default(true).describe('Preview only; do not delete. Default true — pass false to actually delete.')
         })
         .strict(),
