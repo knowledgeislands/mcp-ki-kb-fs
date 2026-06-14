@@ -27,7 +27,7 @@ console.error(`  MCP_KB_FS_AUDIT_LOG=${config.auditLogMode}${config.auditLogMode
 
 const server = new McpServer({
   name: 'mcp-kb-fs',
-  version: '1.1.0'
+  version: '1.0.0'
 })
 
 // Monkey-patch registerTool so every tool's callback is wrapped with the

@@ -313,14 +313,27 @@ const readEntries = async (rootPath: string, dir: string): Promise<Dirent[]> => 
   }
 }
 
-const collectNotes = async (rootPath: string, dir: string, recursive: boolean): Promise<string[]> => {
+// Hard cap on recursion depth for the tree walks. A KB this deep is pathological
+// (or a symlink cycle the realpath guard somehow let through); stop descending
+// past it rather than risk a stack blow-up / hang. The depth counter starts at 0
+// for the directory the walk was asked to list, so this bounds nesting below it.
+const MAX_WALK_DEPTH = 32
+
+// Dirs we never descend into during a recursive walk, on top of the dotdir /
+// meta pruning that `isProtectedPath` already applies. `node_modules` is not a
+// dotdir, so it would otherwise be walked — skip it (and any deep tree inside).
+const isUnwalkableDir = (name: string): boolean => name === 'node_modules'
+
+const collectNotes = async (rootPath: string, dir: string, recursive: boolean, depth = 0): Promise<string[]> => {
   const entries = await readEntries(rootPath, dir)
   const results: string[] = []
   for (const entry of entries) {
     const full = path.join(dir, entry.name)
     if (isProtectedPath(relativeFromRoot(rootPath, full))) continue
     if (entry.isDirectory()) {
-      if (recursive) results.push(...(await collectNotes(rootPath, full, true)))
+      if (recursive && depth < MAX_WALK_DEPTH && !isUnwalkableDir(entry.name)) {
+        results.push(...(await collectNotes(rootPath, full, true, depth + 1)))
+      }
     } else if (entry.isFile() && isNote(entry.name)) {
       results.push(full)
     }
@@ -328,16 +341,17 @@ const collectNotes = async (rootPath: string, dir: string, recursive: boolean): 
   return results
 }
 
-const collectFolders = async (rootPath: string, dir: string, recursive: boolean): Promise<string[]> => {
+const collectFolders = async (rootPath: string, dir: string, recursive: boolean, depth = 0): Promise<string[]> => {
   const entries = await readEntries(rootPath, dir)
   const results: string[] = []
   for (const entry of entries) {
     if (!entry.isDirectory()) continue
     const full = path.join(dir, entry.name)
     if (isProtectedPath(relativeFromRoot(rootPath, full))) continue
+    if (isUnwalkableDir(entry.name)) continue
     results.push(full)
-    if (recursive) {
-      results.push(...(await collectFolders(rootPath, full, true)))
+    if (recursive && depth < MAX_WALK_DEPTH) {
+      results.push(...(await collectFolders(rootPath, full, true, depth + 1)))
     }
   }
   return results

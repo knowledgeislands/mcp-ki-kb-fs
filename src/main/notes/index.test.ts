@@ -581,6 +581,57 @@ describe('createFolder', () => {
   })
 })
 
+describe('walk robustness (depth cap + node_modules pruning)', () => {
+  // MAX_WALK_DEPTH in index.ts is 32; depth is counted from the listed dir (0).
+  // Build a chain deeper than that and confirm the walk stops cleanly rather
+  // than recursing without bound. A note sits below the cap and is found; a note
+  // past the cap is not descended to.
+  const DEPTH_PAST_CAP = 40
+
+  const makeDeepChain = async (segments: number): Promise<string> => {
+    const rel = Array.from({ length: segments }, (_, i) => `d${i}`).join('/')
+    await fs.mkdir(path.join(ROOT_PATH, rel), { recursive: true })
+    return rel
+  }
+
+  it('listNotes stops descending past the depth cap instead of blowing the stack', async () => {
+    const deepRel = await makeDeepChain(DEPTH_PAST_CAP)
+    // A note within the cap is reachable; one at the very bottom is not.
+    await fs.writeFile(path.join(ROOT_PATH, 'd0/d1/d2/shallow.md'), 'x', 'utf-8')
+    await fs.writeFile(path.join(ROOT_PATH, deepRel, 'too-deep.md'), 'x', 'utf-8')
+    const result = await listNotes(cfg, { path: '', recursive: true })
+    const lines = result.content[0].text.split('\n')
+    expect(lines).toContain('d0/d1/d2/shallow.md')
+    expect(lines.some((l) => l.endsWith('too-deep.md'))).toBe(false)
+  })
+
+  it('listFolders stops descending past the depth cap', async () => {
+    await makeDeepChain(DEPTH_PAST_CAP)
+    const result = await listFolders(cfg, { path: '', recursive: true })
+    const lines = result.content[0].text.split('\n')
+    // Folders up to the cap are listed; folders below it are not reached.
+    expect(lines).toContain('d0/d1/d2')
+    expect(lines.some((l) => l.endsWith(`d${DEPTH_PAST_CAP - 1}`))).toBe(false)
+  })
+
+  it('listNotes does not descend into node_modules', async () => {
+    await fs.mkdir(path.join(ROOT_PATH, 'node_modules/pkg'), { recursive: true })
+    await fs.writeFile(path.join(ROOT_PATH, 'node_modules/pkg/dep.md'), 'x', 'utf-8')
+    await fs.writeFile(path.join(ROOT_PATH, 'real.md'), 'x', 'utf-8')
+    const result = await listNotes(cfg, { path: '', recursive: true })
+    const lines = result.content[0].text.split('\n').sort()
+    expect(lines).toEqual(['real.md'])
+  })
+
+  it('listFolders skips node_modules entirely (not listed, not descended)', async () => {
+    await fs.mkdir(path.join(ROOT_PATH, 'node_modules/pkg'), { recursive: true })
+    await fs.mkdir(path.join(ROOT_PATH, 'visible'), { recursive: true })
+    const result = await listFolders(cfg, { path: '', recursive: true })
+    const lines = result.content[0].text.split('\n').sort()
+    expect(lines).toEqual(['visible'])
+  })
+})
+
 describe('error path coverage', () => {
   it('listFolders refuses a protected (dotdir) path argument', async () => {
     await fs.mkdir(path.join(ROOT_PATH, '.git'), { recursive: true })
