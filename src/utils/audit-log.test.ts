@@ -128,6 +128,25 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
     expect(event.args).toEqual([1, 2, 3])
   })
 
+  it('redacts URL credentials across string, array, nested-object and primitive arg values', async () => {
+    const { withAuditLog } = await import('./audit-log.js')
+    const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    await wrapped({
+      url: 'https://user:tok3n@example.com/x',
+      list: ['https://user:tok3n@example.com/y'],
+      nested: { remote: 'https://user:tok3n@example.com/z' },
+      count: 42
+    })
+    await flushAsync()
+    const raw = (await fs.readFile(logPath, 'utf-8')).trim()
+    expect(raw).not.toContain('tok3n')
+    const event = JSON.parse(raw)
+    expect(event.args.url).toBe('https://<redacted>@example.com/x')
+    expect(event.args.list).toEqual(['https://<redacted>@example.com/y'])
+    expect(event.args.nested.remote).toBe('https://<redacted>@example.com/z')
+    expect(event.args.count).toBe(42)
+  })
+
   it('records an error result that lacks a text content block (error stays undefined)', async () => {
     const { withAuditLog } = await import('./audit-log.js')
     // isError true but `content` is not an array, so extractErrorText returns undefined.
