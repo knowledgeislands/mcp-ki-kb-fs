@@ -17,7 +17,7 @@ Every file path is validated against the configured root, so the server cannot r
 - **Strict file types** — notes must end in `.md`; folder listings only return directories.
 - **No network, no auth** — pure local filesystem over MCP stdio.
 
-**Quality:** 118 tests at 100% coverage across statements, branches, functions, and lines.
+**Quality:** 153 tests at 100% coverage across statements, branches, functions, and lines.
 
 ## Available Tools
 
@@ -206,7 +206,7 @@ bun install
 | `MCP_KB_FS_AUDIT_LOG_PATH`      | no       | Path to the JSONL audit log. Default `~/.local/state/mcp-kb-fs/audit.jsonl`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `MCP_KB_FS_AUDIT_LOG_MAX_BYTES` | no       | Size-based rotation threshold in bytes. Default `10485760` (10 MiB). Set to `0` to disable rotation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `MCP_KB_FS_AUDIT_LOG_KEEP`      | no       | Number of rotated audit-log files to retain. Default `5`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `NODE_ENV`                      | no       | Dev convention. `server:mcp:dev`/`server:mcp:inspect` set this to `development`, which makes `loadConfig()` in [`src/config/index.ts`](./src/config/index.ts) load `.env.development` from the CWD. Unset under Claude Desktop, so `.env*` files are ignored in production.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `NODE_ENV`                      | no       | Dev convention. `loadConfig()` in [`src/config/index.ts`](./src/config/index.ts) hydrates `process.env`, from the package root and highest precedence first, from `.env.local`, then `.env.${NODE_ENV}` (when set), then `.env`; a var already in the environment (e.g. the MCP client's `env` block) always wins. `server:mcp:dev`/`server:mcp:inspect` set this to `development` so `.env.development` is picked up; under Claude Desktop it is unset, so only `.env.local`/`.env` would apply.                                                                                                                                                                                                                                           |
 
 ### Claude Desktop Configuration
 
@@ -238,10 +238,11 @@ MCP_KB_FS_ROOT_PATH=~/notes bun run server:mcp:dev
 
 This runs `src/mcp-server/index.ts` under `bun --watch`. Point Claude Desktop at this command during development if you want live reload.
 
-Alternatively, copy [`.env.example`](./.env.example) to `.env.development` and set `MCP_KB_FS_ROOT_PATH` there. The `server:mcp:dev` and
-`server:mcp:inspect` scripts run with `NODE_ENV=development`, and `loadConfig()` in [`src/config/index.ts`](./src/config/index.ts) calls
-`process.loadEnvFile('./.env.${NODE_ENV}')` at startup — so it picks up `.env.development` from the CWD automatically. Claude Desktop does
-not set `NODE_ENV`, so the file is ignored in production; env vars must come from the Desktop config `env` block there.
+Alternatively, copy [`.env.example`](./.env.example) to `.env.development` (or `.env.local`) and set `MCP_KB_FS_ROOT_PATH` there. At startup
+`loadConfig()` in [`src/config/index.ts`](./src/config/index.ts) hydrates `process.env` from the package root, highest precedence first:
+`.env.local`, then `.env.${NODE_ENV}` (when set), then `.env`. The `server:mcp:dev`/`server:mcp:inspect` scripts run with
+`NODE_ENV=development`, so `.env.development` is picked up; Claude Desktop does not set `NODE_ENV`, so only `.env.local`/`.env` would apply.
+A var already present in the environment (e.g. the Desktop config `env` block) always beats any file.
 
 ## Development
 
@@ -282,7 +283,7 @@ bun run lint:md             # prettier + markdownlint for *.md
 ├── package.json
 ├── tsconfig.json               # Base TS config
 ├── tsconfig.build.json         # Build config (emits to dist/)
-├── .env.example                # Env template (copy to .env.development)
+├── .env.example                # Env template (copy to .env.development or .env.local)
 ├── src/
 │   ├── mcp-server/index.ts     # MCP server entry — loadConfig() + registers tools
 │   ├── config/index.ts         # loadConfig(env?) → Config (no module-level singleton)
