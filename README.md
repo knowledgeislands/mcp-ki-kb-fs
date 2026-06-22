@@ -186,7 +186,7 @@ returns directories only.
 ### Prerequisites
 
 - [Bun](https://bun.sh) 1.3+ for the dev loop
-- Node.js 22.0.0 or higher to run the compiled `dist/` (see `.node-version`)
+- Node.js 24.15.0 or higher to run the compiled `dist/` (see `mise.toml`)
 
 ### Install Dependencies
 
