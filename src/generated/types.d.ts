@@ -1,11 +1,11 @@
-// Generated on 2026-06-24T14:59:13.387Z by @knowledgeislands/mcp-kb-fs@1.0.0
-// Server: mcp-kb-mcp-kb-fs
+// Generated on 2026-06-27T20:39:35.414Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
+// Server: mcp-ki-kb-mcp-ki-kb-fs
 // Source: /Users/krisbrown/.mcporter/mcporter.json
-// Transport: STDIO node /Users/krisbrown/kis/knowledgeislands/mcp-kb-fs/dist/mcp-server/index.js
+// Transport: STDIO /Users/krisbrown/.local/share/mise/installs/node/lts/bin/node /Users/krisbrown/kis/knowledgeislands/mcp-ki-kb-fs/dist/mcp-server/index.js
 
 import type { CallResult } from 'mcporter'
 
-export interface McpKbMcpKbFsTools {
+export interface McpKiKbMcpKiKbFsTools {
   /**
    * Read a Knowledge Base note by its KB-relative path — all of it, or just its YAML frontmatter or just
    * its body.
@@ -139,4 +139,101 @@ export interface McpKbMcpKbFsTools {
    * @param dry_run? Preview only; do not delete. Default true — pass false to actually delete.
    */
   kb_note_delete(path: string, dry_run?: boolean): Promise<CallResult>
+
+  /**
+   * Read a side file (image, PDF, attachment, etc.) from the knowledge base.
+   * Returns the file content together with its detected encoding and MIME type:
+   * - `encoding: "utf-8"` — content is a UTF-8 string
+   * - `encoding: "base64"` — content is base64-encoded (use for binary assets)
+   * Zone restriction: the path must start with a declared zone or staging root
+   * (e.g. "Pillars/", "Calendar/", "+/", "-/"). Files at the KB root are not accessible.
+   * Errors:
+   * - "File not found" — path does not exist.
+   * - "Path is outside KB zones" — first segment is not a zone or staging root.
+   * - "Path is protected" — dotfiles and root-level meta files.
+   * - "Not a file" — path is a directory.
+   *
+   * @param path KB-relative path to the file, e.g. "Pillars/images/diagram.png"
+   */
+  kb_file_read(path: string): Promise<CallResult>
+
+  /**
+   * List files in a knowledge-base directory (any type; optionally filtered by extension).
+   * Returns a JSON object with `files` (array of KB-relative paths) and `count`.
+   * Parameters:
+   * - path (string): KB-relative directory to list. Omit or pass "" for a zone root.
+   * - recursive (boolean): Descend into sub-directories. Default false.
+   * - ext (string, optional): Filter by extension including the dot, e.g. ".png", ".pdf".
+   * Zone restriction: the path must start with a declared zone or staging root.
+   *
+   * @param path? KB-relative directory, e.g. "Pillars/images"
+   * @param recursive? Descend into sub-directories. Default false.
+   * @param ext? Filter by file extension including the dot, e.g. ".png". Omit to list all files.
+   */
+  kb_files_list(path?: string, recursive?: boolean, ext?: string): Promise<CallResult>
+
+  /**
+   * Write (create or overwrite) a side file in the knowledge base.
+   * For binary files (images, PDFs), base64-encode the content and set encoding: "base64".
+   * For text files, pass the raw string with encoding: "utf-8" (default).
+   * Atomic write: a sibling temp file is written then renamed, so a crash mid-write
+   * cannot produce a half-written file.
+   * Parameters:
+   * - path (string): KB-relative path to write, e.g. "Pillars/images/diagram.png".
+   * - content (string): UTF-8 text or base64-encoded bytes depending on encoding.
+   * - encoding ("utf-8" | "base64"): Default "utf-8".
+   * - create_dirs (boolean): Create parent directories if they don't exist. Default true.
+   * - dry_run (boolean): When true, returns a preview without writing. Default true.
+   * Zone restriction: the path must start with a declared zone or staging root.
+   *
+   * @param path KB-relative path to write, e.g. "Pillars/images/diagram.png"
+   * @param content File content: UTF-8 string or base64-encoded bytes depending on encoding.
+   * @param encoding? Content encoding. Use "base64" for binary files. Default "utf-8".
+   * @param create_dirs? Create parent directories if they do not exist. Default true.
+   * @param dry_run? Preview the operation without writing. Change to false to actually write.
+   */
+  kb_file_write(path: string, content: string, encoding?: 'utf-8' | 'base64', create_dirs?: boolean, dry_run?: boolean): Promise<CallResult>
+
+  /**
+   * Rename or move a side file within the knowledge base zones.
+   * Non-destructive: fails if the destination already exists.
+   * Parameters:
+   * - from (string): Current KB-relative path.
+   * - to (string): New KB-relative path.
+   * - create_dirs (boolean): Create destination parent directories if needed. Default true.
+   * Zone restriction: both from and to must start with a declared zone or staging root.
+   *
+   * @param from Current KB-relative file path, e.g. "Pillars/images/old.png"
+   * @param to New KB-relative file path, e.g. "Pillars/images/new.png"
+   * @param create_dirs? Create destination parent directories if they do not exist. Default true.
+   */
+  kb_file_rename(from: string, to: string, create_dirs?: boolean): Promise<CallResult>
+
+  /**
+   * Delete a side file from the knowledge base.
+   * Parameters:
+   * - path (string): KB-relative path to delete.
+   * - dry_run (boolean): When true, returns a preview without deleting. Default true.
+   * Zone restriction: the path must start with a declared zone or staging root.
+   *
+   * @param path KB-relative path to delete, e.g. "Pillars/images/old.png"
+   * @param dry_run? Preview only; change to false to actually delete.
+   */
+  kb_file_delete(path: string, dry_run?: boolean): Promise<CallResult>
+
+  /**
+   * Return the Knowledge Islands configuration for this KB: resolved zone names,
+   * staging area names, and the raw .ki-config.toml content.
+   * Use this as an orientation step when working with an unfamiliar KB — it tells
+   * you which top-level folders correspond to each canonical zone (Calendar, Pillars,
+   * Resources, Streams, Admin) and which staging areas (+/ and -/) are configured.
+   * The zone map is derived from .ki-config.toml at server startup; if the file is
+   * absent, all zones use their canonical defaults.
+   * Takes no parameters. Returns a JSON object with:
+   * - zones: { Calendar, Pillars, Resources, Streams, Admin }
+   * - staging: { inbound, outbound }
+   * - kiConfigPresent (boolean)
+   * - kiConfigRaw (string — raw TOML or "(absent — all zones are defaults)")
+   */
+  kb_config(): Promise<CallResult>
 }

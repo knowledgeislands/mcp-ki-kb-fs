@@ -74,7 +74,7 @@
     "deps:missing": "bunx depcheck --json | bunx node-jq --sort-keys '.' | bunx node-jq '.missing | keys | .[]' | xargs bun add -D",
     "deps:unused": "bunx depcheck --json | bunx node-jq --sort-keys '.' | bunx node-jq '.devDependencies[]' | xargs bun remove",
     "deps:update": "bun update --latest",
-    "generate:client": "mcporter emit-ts mcp-kb-mcp-ki-kb-fs --mode client --out src/generated/client.ts --types-out src/generated/types.d.ts && printf '// @ts-nocheck\\n' | cat - src/generated/client.ts > /tmp/gen-tmp.ts && mv /tmp/gen-tmp.ts src/generated/client.ts",
+    "generate:client": "mcporter emit-ts mcp-ki-kb-mcp-ki-kb-fs --mode client --out src/generated/client.ts --types-out src/generated/types.d.ts && printf '// @ts-nocheck\\n' | cat - src/generated/client.ts > /tmp/gen-tmp.ts && mv /tmp/gen-tmp.ts src/generated/client.ts",
     "lint:check": "bunx @biomejs/biome check",
     "lint:fix": "bunx @biomejs/biome check --write --unsafe",
     "lint:format": "bunx @biomejs/biome format --write",
