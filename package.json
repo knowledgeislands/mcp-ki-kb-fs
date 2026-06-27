@@ -1,16 +1,17 @@
 {
-  "name": "@knowledgeislands/mcp-kb-fs",
-  "description": "MCP for markdown-based knowledge bases on a local filesystem",
+  "name": "@knowledgeislands/mcp-ki-kb-fs",
+  "description": "MCP for Knowledge Islands knowledge bases on a local filesystem",
   "version": "1.0.0",
   "author": "kris@kris.me.uk",
   "bin": {
-    "mcp-kb-fs": "dist/mcp-server/index.js"
+    "mcp-ki-kb-fs": "dist/mcp-server/index.js"
   },
   "bugs": {
-    "url": "https://github.com/knowledgeislands/mcp-kb-fs/issues"
+    "url": "https://github.com/knowledgeislands/mcp-ki-kb-fs/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "smol-toml": "^1.7.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -48,7 +49,7 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/knowledgeislands/mcp-kb-fs#readme",
+  "homepage": "https://github.com/knowledgeislands/mcp-ki-kb-fs#readme",
   "keywords": [
     "anthropic",
     "claude",
@@ -65,7 +66,7 @@
   "packageManager": "bun@1.3.14",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/knowledgeislands/mcp-kb-fs.git"
+    "url": "git+https://github.com/knowledgeislands/mcp-ki-kb-fs.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -73,7 +74,7 @@
     "deps:missing": "bunx depcheck --json | bunx node-jq --sort-keys '.' | bunx node-jq '.missing | keys | .[]' | xargs bun add -D",
     "deps:unused": "bunx depcheck --json | bunx node-jq --sort-keys '.' | bunx node-jq '.devDependencies[]' | xargs bun remove",
     "deps:update": "bun update --latest",
-    "generate:client": "mcporter emit-ts mcp-kb-mcp-kb-fs --mode client --out src/generated/client.ts --types-out src/generated/types.d.ts && printf '// @ts-nocheck\\n' | cat - src/generated/client.ts > /tmp/gen-tmp.ts && mv /tmp/gen-tmp.ts src/generated/client.ts",
+    "generate:client": "mcporter emit-ts mcp-kb-mcp-ki-kb-fs --mode client --out src/generated/client.ts --types-out src/generated/types.d.ts && printf '// @ts-nocheck\\n' | cat - src/generated/client.ts > /tmp/gen-tmp.ts && mv /tmp/gen-tmp.ts src/generated/client.ts",
     "lint:check": "bunx @biomejs/biome check",
     "lint:fix": "bunx @biomejs/biome check --write --unsafe",
     "lint:format": "bunx @biomejs/biome format --write",

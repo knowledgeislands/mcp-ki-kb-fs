@@ -1,10 +1,10 @@
 /**
  * Append-only JSONL audit log for tool invocations.
  *
- * Scope is controlled by MCP_KB_FS_AUDIT_LOG: `off` (no logging), `writes`
+ * Scope is controlled by MCP_KI_KB_FS_AUDIT_LOG: `off` (no logging), `writes`
  * (default — `write` and `destructive` levels) or `all` (every tool). Path is
- * configurable via MCP_KB_FS_AUDIT_LOG_PATH; defaults to
- * `~/.local/state/mcp-kb-fs/audit.jsonl`. The mode/path/maxBytes/keep all come
+ * configurable via MCP_KI_KB_FS_AUDIT_LOG_PATH; defaults to
+ * `~/.local/state/mcp-ki-kb-fs/audit.jsonl`. The mode/path/maxBytes/keep all come
  * from the caller-supplied `AuditConfig` slice of Config — this util reads no
  * env and holds no config singleton.
  *
@@ -35,7 +35,7 @@ export interface AuditEvent {
   args: unknown
 }
 
-const SERVER_NAME = 'mcp-kb-fs'
+const SERVER_NAME = 'mcp-ki-kb-fs'
 const MAX_ARG_CHARS = 4096
 
 /**

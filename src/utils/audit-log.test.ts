@@ -6,13 +6,19 @@ import { levelFromAnnotations, makeAccessGatedRegister } from './access-level.js
 import { DESTRUCTIVE, READ_ONLY } from './annotations.js'
 import type { AuditConfig } from './audit-log.js'
 
-describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
-  const tmpDir = path.join(os.tmpdir(), 'mcp-kb-fs-audit-log-tests', `run-${process.pid}-${Date.now()}`)
+describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
+  const tmpDir = path.join(os.tmpdir(), 'mcp-ki-kb-fs-audit-log-tests', `run-${process.pid}-${Date.now()}`)
   const logPath = path.join(tmpDir, 'audit.jsonl')
 
   // The audit-log module keeps internal state (chmodEnsured, the append queue),
   // so reset modules per test for isolation. Config is passed in explicitly.
-  const auditCfg = (o: Partial<AuditConfig> = {}): AuditConfig => ({ mode: 'writes', path: logPath, maxBytes: 10 * 1024 * 1024, keep: 5, ...o })
+  const auditCfg = (o: Partial<AuditConfig> = {}): AuditConfig => ({
+    mode: 'writes',
+    path: logPath,
+    maxBytes: 10 * 1024 * 1024,
+    keep: 5,
+    ...o
+  })
 
   beforeEach(async () => {
     await fs.mkdir(tmpDir, { recursive: true })
@@ -34,7 +40,7 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
     expect(event.tool).toBe('kb_note_write')
     expect(event.level).toBe('destructive')
     expect(event.ok).toBe(true)
-    expect(event.server).toBe('mcp-kb-fs')
+    expect(event.server).toBe('mcp-ki-kb-fs')
     expect(event.args).toEqual({ path: 'memo.md' })
   })
 
@@ -49,7 +55,10 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
 
   it('records ok:false when the result has isError:true', async () => {
     const { withAuditLog } = await import('./audit-log.js')
-    const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({ isError: true, content: [{ type: 'text', text: 'boom' }] }))
+    const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
+      isError: true,
+      content: [{ type: 'text', text: 'boom' }]
+    }))
     await wrapped({})
     await flushAsync()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
@@ -78,7 +87,9 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
 
   it('logs read-level tools when audit mode is "all"', async () => {
     const { withAuditLog } = await import('./audit-log.js')
-    const wrapped = withAuditLog(auditCfg({ mode: 'all' }), 'kb_note_read', 'read', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    const wrapped = withAuditLog(auditCfg({ mode: 'all' }), 'kb_note_read', 'read', async () => ({
+      content: [{ type: 'text', text: 'ok' }]
+    }))
     await wrapped({})
     await flushAsync()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
@@ -160,7 +171,9 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
 
   it('never rotates when maxBytes=0 (rotation disabled)', async () => {
     const { withAuditLog } = await import('./audit-log.js')
-    const wrapped = withAuditLog(auditCfg({ maxBytes: 0 }), 'kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    const wrapped = withAuditLog(auditCfg({ maxBytes: 0 }), 'kb_note_write', 'destructive', async () => ({
+      content: [{ type: 'text', text: 'ok' }]
+    }))
     for (let i = 0; i < 6; i++) await wrapped({ idx: i, pad: 'x'.repeat(200) })
     await new Promise((r) => setTimeout(r, 50))
     // No rotation files exist; everything stayed in the single live log.
@@ -170,7 +183,9 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
 
   it('rotates the audit log when it exceeds maxBytes (keeps history)', async () => {
     const { withAuditLog } = await import('./audit-log.js')
-    const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 2 }), 'kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 2 }), 'kb_note_write', 'destructive', async () => ({
+      content: [{ type: 'text', text: 'ok' }]
+    }))
     // Write enough events to trigger multiple rotations.
     for (let i = 0; i < 6; i++) await wrapped({ idx: i })
     await new Promise((r) => setTimeout(r, 50))
@@ -179,7 +194,9 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
 
   it('rotates by truncating the log when keep=0 (no history)', async () => {
     const { withAuditLog } = await import('./audit-log.js')
-    const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 0 }), 'kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 0 }), 'kb_note_write', 'destructive', async () => ({
+      content: [{ type: 'text', text: 'ok' }]
+    }))
     for (let i = 0; i < 6; i++) await wrapped({ idx: i })
     await new Promise((r) => setTimeout(r, 50))
     // No `.1` rotation file when keep=0.
@@ -194,7 +211,9 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
     await fs.mkdir(`${logPath}.1`, { recursive: true })
     await fs.writeFile(path.join(`${logPath}.1`, 'blocker'), 'x')
     const { withAuditLog } = await import('./audit-log.js')
-    const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 1 }), 'kb_note_write', 'destructive', async () => ({ content: [{ type: 'text', text: 'ok' }] }))
+    const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 1 }), 'kb_note_write', 'destructive', async () => ({
+      content: [{ type: 'text', text: 'ok' }]
+    }))
     for (let i = 0; i < 6; i++) await wrapped({ idx: i })
     await new Promise((r) => setTimeout(r, 50))
     // Rotation failed, so the live log still exists and the blocker dir is intact.
@@ -212,7 +231,7 @@ describe('appendAuditEvent / withAuditLog (mcp-kb-fs)', () => {
   })
 })
 
-describe('levelFromAnnotations / makeAccessGatedRegister (mcp-kb-fs)', () => {
+describe('levelFromAnnotations / makeAccessGatedRegister (mcp-ki-kb-fs)', () => {
   const auditOff: AuditConfig = { mode: 'off', path: '/tmp/unused-audit.jsonl', maxBytes: 0, keep: 0 }
 
   it('maps READ_ONLY annotations to read', () => {
