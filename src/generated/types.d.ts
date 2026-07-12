@@ -1,9 +1,9 @@
-// Generated on 2026-06-27T20:39:35.414Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
+// Generated on 2026-07-12T10:44:03.652Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
 // Server: mcp-ki-kb-mcp-ki-kb-fs
 // Source: /Users/krisbrown/.mcporter/mcporter.json
 // Transport: STDIO /Users/krisbrown/.local/share/mise/installs/node/lts/bin/node /Users/krisbrown/kis/knowledgeislands/mcp-ki-kb-fs/dist/mcp-server/index.js
 
-import type { CallResult } from 'mcporter'
+import type { CallResult } from 'mcporter';
 
 export interface McpKiKbMcpKiKbFsTools {
   /**
@@ -29,7 +29,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param path KB-relative path to the note, e.g. "Pillars/Finance/Budget.md"
    * @param part? Which slice to return: whole file (all), just the YAML frontmatter, or just the body.
    */
-  kb_note_read(path: string, part?: 'all' | 'frontmatter' | 'body'): Promise<CallResult>
+  kb_note_read(path: string, part?: "all" | "frontmatter" | "body"): Promise<CallResult>;
 
   /**
    * List markdown notes (.md files) inside a knowledge base directory.
@@ -42,7 +42,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param path? KB-relative directory path. Empty string lists the knowledge base root.
    * @param recursive? Descend into subdirectories when true.
    */
-  kb_notes_list(path?: string, recursive?: boolean): Promise<CallResult>
+  kb_notes_list(path?: string, recursive?: boolean): Promise<CallResult>;
 
   /**
    * List subfolders inside a knowledge base directory.
@@ -55,7 +55,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param path? KB-relative directory path. Empty string lists the knowledge base root.
    * @param recursive? Descend into subdirectories when true.
    */
-  kb_folders_list(path?: string, recursive?: boolean): Promise<CallResult>
+  kb_folders_list(path?: string, recursive?: boolean): Promise<CallResult>;
 
   /**
    * Write or overwrite a markdown note in the knowledge base.
@@ -78,7 +78,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param create_dirs? Create parent directories if they do not exist. Default true.
    * @param dry_run? Preview only; do not write. Default true — pass false to actually write.
    */
-  kb_note_write(path: string, content: string, create_dirs?: boolean, dry_run?: boolean): Promise<CallResult>
+  kb_note_write(path: string, content: string, create_dirs?: boolean, dry_run?: boolean): Promise<CallResult>;
 
   /**
    * Rename or move a markdown note within the knowledge base. Non-destructive: refuses to overwrite an
@@ -102,7 +102,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param to New KB-relative path for the note, e.g. "Pillars/Finance/Budget.md"
    * @param create_dirs? Create parent directories of the destination if they do not exist. Default true.
    */
-  kb_note_rename(from: string, to: string, create_dirs?: boolean): Promise<CallResult>
+  kb_note_rename(from: string, to: string, create_dirs?: boolean): Promise<CallResult>;
 
   /**
    * Create a folder in the knowledge base. Idempotent: succeeds even if the folder already exists.
@@ -118,7 +118,7 @@ export interface McpKiKbMcpKiKbFsTools {
    *
    * @param path KB-relative folder path to create, e.g. "Pillars/Finance/2026"
    */
-  kb_folder_create(path: string): Promise<CallResult>
+  kb_folder_create(path: string): Promise<CallResult>;
 
   /**
    * Delete a markdown note from the knowledge base.
@@ -138,7 +138,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param path KB-relative path of the note to delete, e.g. "Inbox/2026-04-30.md"
    * @param dry_run? Preview only; do not delete. Default true — pass false to actually delete.
    */
-  kb_note_delete(path: string, dry_run?: boolean): Promise<CallResult>
+  kb_note_delete(path: string, dry_run?: boolean): Promise<CallResult>;
 
   /**
    * Read a side file (image, PDF, attachment, etc.) from the knowledge base.
@@ -155,7 +155,7 @@ export interface McpKiKbMcpKiKbFsTools {
    *
    * @param path KB-relative path to the file, e.g. "Pillars/images/diagram.png"
    */
-  kb_file_read(path: string): Promise<CallResult>
+  kb_file_read(path: string): Promise<CallResult>;
 
   /**
    * List files in a knowledge-base directory (any type; optionally filtered by extension).
@@ -170,7 +170,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param recursive? Descend into sub-directories. Default false.
    * @param ext? Filter by file extension including the dot, e.g. ".png". Omit to list all files.
    */
-  kb_files_list(path?: string, recursive?: boolean, ext?: string): Promise<CallResult>
+  kb_files_list(path?: string, recursive?: boolean, ext?: string): Promise<CallResult>;
 
   /**
    * Write (create or overwrite) a side file in the knowledge base.
@@ -192,7 +192,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param create_dirs? Create parent directories if they do not exist. Default true.
    * @param dry_run? Preview the operation without writing. Change to false to actually write.
    */
-  kb_file_write(path: string, content: string, encoding?: 'utf-8' | 'base64', create_dirs?: boolean, dry_run?: boolean): Promise<CallResult>
+  kb_file_write(path: string, content: string, encoding?: "utf-8" | "base64", create_dirs?: boolean, dry_run?: boolean): Promise<CallResult>;
 
   /**
    * Rename or move a side file within the knowledge base zones.
@@ -207,7 +207,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param to New KB-relative file path, e.g. "Pillars/images/new.png"
    * @param create_dirs? Create destination parent directories if they do not exist. Default true.
    */
-  kb_file_rename(from: string, to: string, create_dirs?: boolean): Promise<CallResult>
+  kb_file_rename(from: string, to: string, create_dirs?: boolean): Promise<CallResult>;
 
   /**
    * Delete a side file from the knowledge base.
@@ -219,7 +219,7 @@ export interface McpKiKbMcpKiKbFsTools {
    * @param path KB-relative path to delete, e.g. "Pillars/images/old.png"
    * @param dry_run? Preview only; change to false to actually delete.
    */
-  kb_file_delete(path: string, dry_run?: boolean): Promise<CallResult>
+  kb_file_delete(path: string, dry_run?: boolean): Promise<CallResult>;
 
   /**
    * Return the Knowledge Islands configuration for this KB: resolved zone names,
@@ -235,5 +235,6 @@ export interface McpKiKbMcpKiKbFsTools {
    * - kiConfigPresent (boolean)
    * - kiConfigRaw (string — raw TOML or "(absent — all zones are defaults)")
    */
-  kb_config(): Promise<CallResult>
+  kb_config(): Promise<CallResult>;
 }
+
