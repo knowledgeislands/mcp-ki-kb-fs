@@ -1,7 +1,7 @@
 ---
 id: '001'
 title: Adopt uniform governance modes and bootstrap
-status: open
+status: in-progress
 roadmap: foundation-tooling/adopt-uniform-governance-modes-and-bootstrap
 blocks: —
 blocked-by: —
@@ -13,18 +13,18 @@ This MCP repository is the pilot for the harness's uniform-mode rollout. Its cur
 
 ## Current state
 
-On 2026-07-16, `bun run test` passed with 220 tests. `bun run ki:audit` failed because `ki:authoring:audit`, `ki:engineering:audit`, `ki:mcp:audit`, and `ki:repo:audit` each invoke absent `.claude/skills/*/scripts/audit-*.ts` files. The repository is clean on `main` and its `.ki-meta` payload comes from the older harness ref `8240bc5629d40ca33f08f20d8141973b6984f93e`.
+On 2026-07-16, the repository adopted the current five-skill governance baseline: `ki-authoring`, `ki-engineering`, `ki-mcp`, `ki-project-roadmap`, and `ki-repo`. The generated `.ki-meta/` payload now supplies the canonical aggregate commands; the historical checked-in `scripts/ki/` wrappers have been removed. `bun run ki:audit`, `bun run test` (220 passing tests), `bun run ki:test:smoke` (13 tools and schemas), and the bootstrap audit all pass.
 
 ## Steps
 
-1. Add the `ki-project-roadmap` coverage declaration and re-bootstrap from the current harness, publishing only the declared generated runtime payloads.
-2. Reconcile `package.json` to the current aggregate and scoped command surface, preserving MCP-specific server, generator, and smoke-test commands.
-3. Run the focused bootstrap, project-roadmap, engineering, authoring, MCP, test, and aggregate gates; classify every failure as pilot drift or a harness defect.
-4. Commit the pilot migration and report the validated recipe and any harness defect to the coordinating `foundation-tooling/004` plan.
+1. [x] Add the `ki-project-roadmap` coverage declaration and re-bootstrap from the current harness, publishing only the declared generated runtime payloads.
+2. [x] Reconcile `package.json` to the current aggregate and scoped command surface, preserving MCP-specific server, generator, and smoke-test commands.
+3. [x] Run the focused bootstrap, project-roadmap, engineering, authoring, MCP, test, and aggregate gates; classify every failure as pilot drift or a harness defect.
+4. [ ] Commit the pilot migration and report the validated recipe and any harness defect to the coordinating `foundation-tooling/004` plan.
 
 ## Files touched
 
-`.ki-config.toml`, `.ki-meta/`, `.gitignore`, generated project-local runtime payloads, `package.json`, `ROADMAP.md`, `docs/roadmap/`, and only any source/config files a failing required gate proves are necessary.
+`.ki-config.toml`, `.ki-meta/`, `.markdownlint-cli2.jsonc`, `knip.json`, `package.json`, `.github/workflows/ci.yml`, retired `scripts/ki/` wrappers, `ROADMAP.md`, and `docs/roadmap/`.
 
 ## Verify
 
