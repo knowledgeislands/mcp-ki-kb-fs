@@ -1,14 +1,29 @@
-# Roadmap
+# Project roadmap
 
-Forward-looking plans only. Shipped features live in [README.md](./README.md); release history lives in the git log.
+This portfolio view is generated from the canonical theme roadmaps under `docs/roadmap/`. Edit those files, then run `ki-project-roadmap` CONFORM.
 
-## Next Up
+## Blocking
 
-- Conditional writes via etag for `kb_note_write`. Today the tool is annotated `DESTRUCTIVE` because it can clobber an existing note unconditionally. Proposed redesign: `kb_note_read` returns an `etag` (e.g. truncated SHA-256 of file bytes) alongside content; `kb_note_write` accepts an optional `if_match` arg and refuses if the on-disk etag differs (optimistic locking). With `if_match` set, the tool becomes `write` tier; without it, force-overwrite stays `destructive`. Likely shape is a tool split — `kb_note_write_safe` (write) and `kb_note_write` (destructive force) — so the access-level gate accurately reflects which mode the caller asked for. See [src/tools/notes/index.ts](./src/tools/notes/index.ts) for the current single-tool surface.
+Actively broken, or blocking the `Next` horizon: takes priority over everything else and must clear before `Next` work proceeds. Empty means nothing is on fire.
 
-## Future Advanced Capabilities
+## Next
 
-## Tooling
+Scoped and ready to start — the immediate queue, picked up before anything in **Soon** or **Future**.
 
-- Close remaining coverage gap to satisfy the 100% vitest threshold (currently 99.4% statements / 97.1% branches). Defensive `??` and rethrow arms in [src/main/notes/index.ts](./src/main/notes/index.ts) and [src/utils/audit-log.ts](./src/utils/audit-log.ts) need either tests or `/* v8 ignore */` markers — the same pattern m365 already documents.
-- Smoke test (`bun run ki:test:smoke`) — boot the built server and verify the wire-level tool surface matches in-process registration. mcp-gmail has the reference implementation (`scripts/smoke.ts` + CI step); kb-fs lacks both.
+- [Foundation Tooling: Adopt uniform governance modes and bootstrap](docs/roadmap/foundation-tooling/ROADMAP.md#adopt-uniform-governance-modes-and-bootstrap)
+- [Tool Surface: Add conditional writes via etag for `kb_note_write`](docs/roadmap/tool-surface/ROADMAP.md#add-conditional-writes-via-etag-for-kbnotewrite)
+
+## Soon
+
+Understood and roughly scoped but not yet started — worth doing once the **Next** queue clears, ahead of anything still speculative.
+
+- [Foundation Tooling: Add wire-level smoke test](docs/roadmap/foundation-tooling/ROADMAP.md#add-wire-level-smoke-test)
+- [Foundation Tooling: Close remaining coverage gap](docs/roadmap/foundation-tooling/ROADMAP.md#close-remaining-coverage-gap)
+
+## Waiting for
+
+Worth doing, but presently blocked on an external dependency or decision. Revisit when its named condition changes rather than treating it as dormant local work.
+
+## Future
+
+Speculative or not yet scoped — items marked _(candidate)_ need a scoping pass (or a decision to drop them) before they're actionable.
