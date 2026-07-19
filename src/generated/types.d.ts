@@ -1,4 +1,4 @@
-// Generated on 2026-07-18T16:27:37.985Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
+// Generated on 2026-07-19T00:07:44.749Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
 // Server: mcp-ki-kb-mcp-ki-kb-fs
 // Source: /Users/krisbrown/.mcporter/mcporter.json
 // Transport: STDIO /Users/krisbrown/.local/share/mise/installs/node/lts/bin/node /Users/krisbrown/workspaces/kis/knowledgeislands/mcp-ki-kb-fs/dist/mcp-server/index.js
