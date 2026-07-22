@@ -94,6 +94,12 @@ export const DEFAULT_ZONES: ResolvedZones = {
   outbound: '-'
 }
 
+/**
+ * Exact KB-relative files that may be read through `kb_read`.
+ * Ordinary file and note tools remain restricted to declared KB zones.
+ */
+export const DEFAULT_ROOT_FILE_ALLOWLIST = ['README.md', 'AGENTS.md', 'CLAUDE.md'] as const
+
 export interface Config {
   /** Absolute KB root. All paths resolve under it and are confined to it. */
   rootPath: string
@@ -104,6 +110,8 @@ export interface Config {
   auditLogKeep: number
   /** Resolved zone → folder-name map, derived from .ki-config.toml or defaults. */
   zones: ResolvedZones
+  /** Exact KB-relative paths readable through kb_read. */
+  rootFileAllowlist: readonly string[]
   /** Raw .ki-config.toml text if present, null if absent. */
   kiConfigRaw: string | null
 }
@@ -141,14 +149,31 @@ const parseNonNegativeInt = (raw: string | undefined, fallback: number, varName:
  * Read .ki-config.toml from the KB root (synchronously, during startup) and
  * resolve the zone map. Returns defaults for any zone not declared.
  */
-const loadKiConfig = (rootPath: string): { zones: ResolvedZones; kiConfigRaw: string | null } => {
+const isRootFileAllowlistPath = (value: string): boolean => {
+  if (!value || value.trim() !== value || value.startsWith('/') || value.startsWith('~') || value.includes('\\') || value.includes('\0')) {
+    return false
+  }
+  return value.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..')
+}
+
+const parseRootFileAllowlist = (value: unknown): readonly string[] => {
+  if (value === undefined) return [...DEFAULT_ROOT_FILE_ALLOWLIST]
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === 'string' && isRootFileAllowlistPath(entry))) {
+    throw new Error(
+      '.ki-config.toml root_file_allowlist must be an array of exact, non-empty KB-relative paths without traversal or backslashes.'
+    )
+  }
+  return [...value]
+}
+
+const loadKiConfig = (rootPath: string): { zones: ResolvedZones; rootFileAllowlist: readonly string[]; kiConfigRaw: string | null } => {
   const configPath = path.join(rootPath, '.ki-config.toml')
   let raw: string | null = null
   try {
     raw = fs.readFileSync(configPath, 'utf-8')
   } catch {
     // Absent or unreadable — proceed with defaults.
-    return { zones: { ...DEFAULT_ZONES }, kiConfigRaw: null }
+    return { zones: { ...DEFAULT_ZONES }, rootFileAllowlist: [...DEFAULT_ROOT_FILE_ALLOWLIST], kiConfigRaw: null }
   }
 
   let parsed: Record<string, unknown>
@@ -175,6 +200,7 @@ const loadKiConfig = (rootPath: string): { zones: ResolvedZones; kiConfigRaw: st
       inbound: str(declared.inbound, DEFAULT_ZONES.inbound),
       outbound: str(declared.outbound, DEFAULT_ZONES.outbound)
     },
+    rootFileAllowlist: parseRootFileAllowlist(kb.root_file_allowlist),
     kiConfigRaw: raw
   }
 }
@@ -190,7 +216,7 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): Config => {
   assert(env.MCP_KI_KB_FS_ROOT_PATH, 'MCP_KI_KB_FS_ROOT_PATH environment variable must be set')
 
   const rootPath = path.resolve(expandHome(env.MCP_KI_KB_FS_ROOT_PATH))
-  const { zones, kiConfigRaw } = loadKiConfig(rootPath)
+  const { zones, rootFileAllowlist, kiConfigRaw } = loadKiConfig(rootPath)
 
   return {
     rootPath,
@@ -202,6 +228,7 @@ export const loadConfig = (env: NodeJS.ProcessEnv = process.env): Config => {
     auditLogMaxBytes: parseNonNegativeInt(env.MCP_KI_KB_FS_AUDIT_LOG_MAX_BYTES, 10 * 1024 * 1024, 'MCP_KI_KB_FS_AUDIT_LOG_MAX_BYTES'),
     auditLogKeep: parseNonNegativeInt(env.MCP_KI_KB_FS_AUDIT_LOG_KEEP, 5, 'MCP_KI_KB_FS_AUDIT_LOG_KEEP'),
     zones,
+    rootFileAllowlist,
     kiConfigRaw
   }
 }

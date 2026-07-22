@@ -27,6 +27,7 @@ const cfg: Config = {
     inbound: '+',
     outbound: '-'
   },
+  rootFileAllowlist: ['README.md', 'AGENTS.md', 'CLAUDE.md'],
   kiConfigRaw: null
 }
 

@@ -10,7 +10,7 @@ export const registerConfigTools = (server: McpServer, cfg: Config): void => {
     {
       title: 'KB Config',
       description: `Return the Knowledge Islands configuration for this KB: resolved zone names,
-staging area names, and the raw .ki-config.toml content.
+staging area names, the root-file read allow-list, and the raw .ki-config.toml content.
 
 Use this as an orientation step when working with an unfamiliar KB — it tells
 you which top-level folders correspond to each canonical zone (Calendar, Pillars,
@@ -22,6 +22,7 @@ absent, all zones use their canonical defaults.
 Takes no parameters. Returns a JSON object with:
 - zones: { Calendar, Pillars, Resources, Streams, Admin }
 - staging: { inbound, outbound }
+- rootFileAllowlist (exact paths available through kb_read)
 - kiConfigPresent (boolean)
 - kiConfigRaw (string — raw TOML or "(absent — all zones are defaults)")`,
       inputSchema: z.object({}).strict(),

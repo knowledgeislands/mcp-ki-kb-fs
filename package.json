@@ -1,7 +1,7 @@
 {
   "name": "@knowledgeislands/mcp-ki-kb-fs",
   "description": "MCP for Knowledge Islands knowledge bases on a local filesystem",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "author": "kris@kris.me.uk",
   "bin": {
     "mcp-ki-kb-fs": "dist/mcp-server/index.js"

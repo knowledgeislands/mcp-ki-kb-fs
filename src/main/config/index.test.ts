@@ -23,6 +23,7 @@ const cfg = (overrides: Partial<Config> = {}): Config => ({
     inbound: '+',
     outbound: '-'
   },
+  rootFileAllowlist: ['README.md', 'AGENTS.md', 'CLAUDE.md'],
   kiConfigRaw: null,
   ...overrides
 })
@@ -47,6 +48,7 @@ describe('readKbConfig', () => {
       Admin: 'Admin'
     })
     expect(parsed.staging).toEqual({ inbound: '+', outbound: '-' })
+    expect(parsed.rootFileAllowlist).toEqual(['README.md', 'AGENTS.md', 'CLAUDE.md'])
     expect(parsed.kiConfigPresent).toBe(false)
     expect(parsed.kiConfigRaw).toBe('(absent — all zones are defaults)')
   })
@@ -99,5 +101,11 @@ describe('readKbConfig', () => {
     // zones object does not include inbound/outbound
     expect(parsed.zones.inbound).toBeUndefined()
     expect(parsed.zones.outbound).toBeUndefined()
+  })
+
+  it('includes the exact root-file allow-list separately from zones', () => {
+    const result = readKbConfig(cfg({ rootFileAllowlist: ['README.md', '.github/copilot-instructions.md'] }))
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed.rootFileAllowlist).toEqual(['README.md', '.github/copilot-instructions.md'])
   })
 })

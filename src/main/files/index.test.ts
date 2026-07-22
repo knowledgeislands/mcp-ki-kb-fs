@@ -3,7 +3,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { Config } from '../../config/index.js'
-import { deleteFile, listFiles, readFile, renameFile, writeFile } from './index.js'
+import { deleteFile, listContent, listFiles, readFile, renameFile, writeFile } from './index.js'
 
 const ROOT_PATH = path.join(os.tmpdir(), 'knowledgeislands-tests', `files-${process.pid}`)
 const ZONE = 'Pillars'
@@ -24,6 +24,7 @@ const cfg: Config = {
     inbound: '+',
     outbound: '-'
   },
+  rootFileAllowlist: ['README.md', 'AGENTS.md', 'CLAUDE.md'],
   kiConfigRaw: null
 }
 
@@ -107,6 +108,97 @@ describe('readFile', () => {
     const result = await readFile(cfg, { path: `${ZONE}/archive.xyz` })
     const parsed = JSON.parse(result.content[0].text)
     expect(parsed.mimeType).toBe('application/octet-stream')
+  })
+
+  it('returns Markdown frontmatter or body when requested', async () => {
+    await fs.writeFile(zp('frontmatter.md'), '---\ntitle: Test\n---\n# Body\n', 'utf-8')
+    const frontmatter = await readFile(cfg, { path: `${ZONE}/frontmatter.md`, part: 'frontmatter' })
+    const body = await readFile(cfg, { path: `${ZONE}/frontmatter.md`, part: 'body' })
+    expect(JSON.parse(frontmatter.content[0].text).content).toBe('title: Test')
+    expect(JSON.parse(body.content[0].text).content).toBe('# Body\n')
+  })
+
+  it('rejects Markdown parts for a non-Markdown file', async () => {
+    await fs.writeFile(zp('hello.txt'), 'hello', 'utf-8')
+    const result = await readFile(cfg, { path: `${ZONE}/hello.txt`, part: 'body' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('only available for UTF-8 Markdown')
+  })
+})
+
+describe('readFile — root-file allow-list', () => {
+  it('reads a default allow-listed root README', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'README.md'), '# KB context', 'utf-8')
+    const result = await readFile(cfg, { path: 'README.md' })
+    expect((result as { isError?: boolean }).isError).toBeUndefined()
+    const parsed = JSON.parse(result.content[0].text)
+    expect(parsed).toMatchObject({ path: 'README.md', encoding: 'utf-8', mimeType: 'text/markdown', content: '# KB context' })
+  })
+
+  it('reads an explicitly configured nested agent instruction file', async () => {
+    await fs.mkdir(path.join(ROOT_PATH, '.github'), { recursive: true })
+    await fs.writeFile(path.join(ROOT_PATH, '.github', 'copilot-instructions.md'), '# Copilot', 'utf-8')
+    const result = await readFile(
+      { ...cfg, rootFileAllowlist: ['.github/copilot-instructions.md'] },
+      { path: '.github/copilot-instructions.md' }
+    )
+    expect((result as { isError?: boolean }).isError).toBeUndefined()
+    expect(JSON.parse(result.content[0].text).content).toBe('# Copilot')
+  })
+
+  it('rejects every path not in the exact allow-list', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'LICENSE.md'), 'private licence', 'utf-8')
+    const result = await readFile(cfg, { path: 'LICENSE.md' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('root_file_allowlist')
+  })
+
+  it('rejects traversal before testing the allow-list', async () => {
+    const result = await readFile(cfg, { path: '../README.md' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('Path escapes root')
+  })
+
+  it('requires the configured path spelling exactly', async () => {
+    await fs.writeFile(path.join(ROOT_PATH, 'README.md'), '# KB context', 'utf-8')
+    const result = await readFile(cfg, { path: './README.md' })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('root_file_allowlist')
+  })
+
+  it('rejects an allow-listed filename when it is a symlink outside the KB root', async () => {
+    const outside = path.join(ROOT_PATH, '..', `root-file-outside-${process.pid}.md`)
+    try {
+      await fs.writeFile(outside, 'secret', 'utf-8')
+      await fs.symlink(outside, path.join(ROOT_PATH, 'README.md'))
+      const result = await readFile(cfg, { path: 'README.md' })
+      expect((result as { isError?: boolean }).isError).toBe(true)
+      expect(result.content[0].text).toContain('Path escapes root')
+    } finally {
+      await fs.rm(outside, { force: true })
+    }
+  })
+})
+
+describe('listContent', () => {
+  it('returns a uniform JSON response for files, folders, and Markdown notes', async () => {
+    await fs.writeFile(zp('note.md'), '# note', 'utf-8')
+    await fs.writeFile(zp('asset.txt'), 'asset', 'utf-8')
+    await fs.mkdir(zp('folder'), { recursive: true })
+
+    const files = JSON.parse((await listContent(cfg, { path: ZONE, kind: 'files', recursive: false })).content[0].text)
+    const folders = JSON.parse((await listContent(cfg, { path: ZONE, kind: 'folders', recursive: false })).content[0].text)
+    const notes = JSON.parse((await listContent(cfg, { path: ZONE, kind: 'notes', recursive: false })).content[0].text)
+
+    expect(files.entries.sort()).toEqual([`${ZONE}/asset.txt`, `${ZONE}/note.md`])
+    expect(folders.entries).toEqual([`${ZONE}/folder`])
+    expect(notes.entries).toEqual([`${ZONE}/note.md`])
+  })
+
+  it('does not allow listing the KB root or an allow-listed root file', async () => {
+    const result = await listContent(cfg, { path: '', kind: 'files', recursive: false })
+    expect((result as { isError?: boolean }).isError).toBe(true)
+    expect(result.content[0].text).toContain('outside KB zones')
   })
 })
 

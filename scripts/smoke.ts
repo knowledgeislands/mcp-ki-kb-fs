@@ -13,21 +13,15 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 
 // Single source of truth for the tool surface — kept in sync with the
-// registration in `src/tools/notes/index.ts`. If you add a tool, update both.
+// registrations in `src/tools/`. If you add a tool, update both.
 const EXPECTED_TOOLS = [
   'kb_config',
-  'kb_file_delete',
-  'kb_file_read',
-  'kb_file_rename',
-  'kb_file_write',
-  'kb_files_list',
+  'kb_delete',
   'kb_folder_create',
-  'kb_folders_list',
-  'kb_note_delete',
-  'kb_note_read',
-  'kb_note_rename',
-  'kb_note_write',
-  'kb_notes_list'
+  'kb_list',
+  'kb_read',
+  'kb_rename',
+  'kb_write'
 ] as const
 
 const die = (msg: string, detail?: unknown): never => {

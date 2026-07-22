@@ -17,7 +17,7 @@ import * as fs from 'node:fs/promises'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { loadConfig } from '../config/index.js'
-import { registerConfigTools, registerFilesTools, registerNotesTools } from '../tools/index.js'
+import { registerConfigTools, registerKbTools } from '../tools/index.js'
 import { makeAccessGatedRegister } from '../utils/access-level.js'
 
 const config = loadConfig()
@@ -35,7 +35,7 @@ const server = new McpServer({
 
 // Monkey-patch registerTool so every tool's callback is wrapped with the
 // audit logger. Done in-place rather than passing a wrapped reference because
-// register*Tools calls server.registerTool directly.
+// the registration helpers call server.registerTool directly.
 server.registerTool = makeAccessGatedRegister(server, config.accessLevel, {
   mode: config.auditLogMode,
   path: config.auditLogPath,
@@ -43,8 +43,7 @@ server.registerTool = makeAccessGatedRegister(server, config.accessLevel, {
   keep: config.auditLogKeep
 })
 
-registerNotesTools(server, config)
-registerFilesTools(server, config)
+registerKbTools(server, config)
 registerConfigTools(server, config)
 
 const main = async (): Promise<void> => {

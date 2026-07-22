@@ -47,6 +47,8 @@ export const collectFiles = async (rootPath: string, dir: string, recursive: boo
   const results: string[] = []
   for (const entry of entries) {
     const full = path.join(dir, entry.name)
+    const rel = relativeFromRoot(rootPath, full)
+    if (isProtectedPath(rel)) continue
     if (entry.isDirectory()) {
       if (recursive && depth < MAX_WALK_DEPTH && !isUnwalkableDir(entry.name)) {
         results.push(...(await collectFiles(rootPath, full, recursive, ext, depth + 1)))

@@ -129,6 +129,26 @@ describe('loadConfig', () => {
       fs.rmSync(path.join(TOML_ROOT, '.ki-config.toml'))
     })
 
+    it('uses the default root-file allow-list when .ki-config.toml has none', () => {
+      const cfg = loadConfig({ MCP_KI_KB_FS_ROOT_PATH: TOML_ROOT })
+      expect(cfg.rootFileAllowlist).toEqual(['README.md', 'AGENTS.md', 'CLAUDE.md'])
+    })
+
+    it('uses exact root-file allow-list paths from .ki-config.toml', () => {
+      const toml = '[knowledgeislands-kb]\nroot_file_allowlist = ["README.md", "GEMINI.md", ".github/copilot-instructions.md"]\n'
+      fs.writeFileSync(path.join(TOML_ROOT, '.ki-config.toml'), toml, 'utf-8')
+      const cfg = loadConfig({ MCP_KI_KB_FS_ROOT_PATH: TOML_ROOT })
+      expect(cfg.rootFileAllowlist).toEqual(['README.md', 'GEMINI.md', '.github/copilot-instructions.md'])
+      fs.rmSync(path.join(TOML_ROOT, '.ki-config.toml'))
+    })
+
+    it('rejects non-relative or traversal paths in root_file_allowlist', () => {
+      const toml = '[knowledgeislands-kb]\nroot_file_allowlist = ["../.env"]\n'
+      fs.writeFileSync(path.join(TOML_ROOT, '.ki-config.toml'), toml, 'utf-8')
+      expect(() => loadConfig({ MCP_KI_KB_FS_ROOT_PATH: TOML_ROOT })).toThrow(/root_file_allowlist must be an array/)
+      fs.rmSync(path.join(TOML_ROOT, '.ki-config.toml'))
+    })
+
     it('throws on a malformed .ki-config.toml (TOML parse error branch, lines 155-161)', () => {
       fs.writeFileSync(path.join(TOML_ROOT, '.ki-config.toml'), '[[invalid\n', 'utf-8')
       expect(() => loadConfig({ MCP_KI_KB_FS_ROOT_PATH: TOML_ROOT })).toThrow(/.ki-config.toml parse error/)

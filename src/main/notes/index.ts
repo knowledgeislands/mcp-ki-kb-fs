@@ -1,7 +1,8 @@
 /**
  * The KB note/folder operations — read / list / write / rename / delete /
  * create-folder — as implementation functions. The tool handlers
- * (src/tools/notes/index.ts) are thin wrappers that call one of these. Keeping
+ * (src/tools/kb/index.ts) are thin wrappers that call these where Markdown- or
+ * folder-specific behaviour is needed. Keeping
  * the logic here (not in the excluded aggregator) makes every branch
  * unit-testable against a real temp KB root.
  *

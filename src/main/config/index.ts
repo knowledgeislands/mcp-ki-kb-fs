@@ -21,6 +21,7 @@ export const readKbConfig = (cfg: Config) => {
       inbound: cfg.zones.inbound,
       outbound: cfg.zones.outbound
     },
+    rootFileAllowlist: cfg.rootFileAllowlist,
     kiConfigPresent: cfg.kiConfigRaw !== null,
     kiConfigRaw: cfg.kiConfigRaw ?? '(absent — all zones are defaults)'
   })

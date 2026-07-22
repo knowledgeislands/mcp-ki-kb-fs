@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Generated on 2026-07-19T00:07:44.749Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
+// Generated on 2026-07-22T14:52:47.075Z by @knowledgeislands/mcp-ki-kb-fs@1.0.0
 // Server: mcp-ki-kb-mcp-ki-kb-fs
 // Source: /Users/krisbrown/.mcporter/mcporter.json
 // Transport: STDIO /Users/krisbrown/.local/share/mise/installs/node/lts/bin/node /Users/krisbrown/workspaces/kis/knowledgeislands/mcp-ki-kb-fs/dist/mcp-server/index.js
@@ -24,74 +24,38 @@ export async function createMcpKiKbMcpKiKbFsClient(options: CreateClientOptions 
   const ownsRuntime = !options.runtime;
   const proxy = createServerProxy(runtime, "mcp-ki-kb-mcp-ki-kb-fs");
   const client: McpKiKbMcpKiKbFsClient = {
-    async kb_note_read(params: Parameters<McpKiKbMcpKiKbFsTools["kb_note_read"]>[0]) {
-      const tool = proxy.kbNoteRead as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_note_read"]>[0]) => Promise<unknown>;
+    async kb_read(params: Parameters<McpKiKbMcpKiKbFsTools["kb_read"]>[0]) {
+      const tool = proxy.kbRead as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_read"]>[0]) => Promise<unknown>;
       const raw = await tool(params);
       return wrapCallResult(raw).callResult;
     },
 
-    async kb_notes_list(params: Parameters<McpKiKbMcpKiKbFsTools["kb_notes_list"]>[0]) {
-      const tool = proxy.kbNotesList as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_notes_list"]>[0]) => Promise<unknown>;
+    async kb_list(params: Parameters<McpKiKbMcpKiKbFsTools["kb_list"]>[0]) {
+      const tool = proxy.kbList as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_list"]>[0]) => Promise<unknown>;
       const raw = await tool(params);
       return wrapCallResult(raw).callResult;
     },
 
-    async kb_folders_list(params: Parameters<McpKiKbMcpKiKbFsTools["kb_folders_list"]>[0]) {
-      const tool = proxy.kbFoldersList as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_folders_list"]>[0]) => Promise<unknown>;
+    async kb_write(params: Parameters<McpKiKbMcpKiKbFsTools["kb_write"]>[0]) {
+      const tool = proxy.kbWrite as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_write"]>[0]) => Promise<unknown>;
       const raw = await tool(params);
       return wrapCallResult(raw).callResult;
     },
 
-    async kb_note_write(params: Parameters<McpKiKbMcpKiKbFsTools["kb_note_write"]>[0]) {
-      const tool = proxy.kbNoteWrite as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_note_write"]>[0]) => Promise<unknown>;
+    async kb_rename(params: Parameters<McpKiKbMcpKiKbFsTools["kb_rename"]>[0]) {
+      const tool = proxy.kbRename as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_rename"]>[0]) => Promise<unknown>;
       const raw = await tool(params);
       return wrapCallResult(raw).callResult;
     },
 
-    async kb_note_rename(params: Parameters<McpKiKbMcpKiKbFsTools["kb_note_rename"]>[0]) {
-      const tool = proxy.kbNoteRename as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_note_rename"]>[0]) => Promise<unknown>;
+    async kb_delete(params: Parameters<McpKiKbMcpKiKbFsTools["kb_delete"]>[0]) {
+      const tool = proxy.kbDelete as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_delete"]>[0]) => Promise<unknown>;
       const raw = await tool(params);
       return wrapCallResult(raw).callResult;
     },
 
     async kb_folder_create(params: Parameters<McpKiKbMcpKiKbFsTools["kb_folder_create"]>[0]) {
       const tool = proxy.kbFolderCreate as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_folder_create"]>[0]) => Promise<unknown>;
-      const raw = await tool(params);
-      return wrapCallResult(raw).callResult;
-    },
-
-    async kb_note_delete(params: Parameters<McpKiKbMcpKiKbFsTools["kb_note_delete"]>[0]) {
-      const tool = proxy.kbNoteDelete as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_note_delete"]>[0]) => Promise<unknown>;
-      const raw = await tool(params);
-      return wrapCallResult(raw).callResult;
-    },
-
-    async kb_file_read(params: Parameters<McpKiKbMcpKiKbFsTools["kb_file_read"]>[0]) {
-      const tool = proxy.kbFileRead as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_file_read"]>[0]) => Promise<unknown>;
-      const raw = await tool(params);
-      return wrapCallResult(raw).callResult;
-    },
-
-    async kb_files_list(params: Parameters<McpKiKbMcpKiKbFsTools["kb_files_list"]>[0]) {
-      const tool = proxy.kbFilesList as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_files_list"]>[0]) => Promise<unknown>;
-      const raw = await tool(params);
-      return wrapCallResult(raw).callResult;
-    },
-
-    async kb_file_write(params: Parameters<McpKiKbMcpKiKbFsTools["kb_file_write"]>[0]) {
-      const tool = proxy.kbFileWrite as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_file_write"]>[0]) => Promise<unknown>;
-      const raw = await tool(params);
-      return wrapCallResult(raw).callResult;
-    },
-
-    async kb_file_rename(params: Parameters<McpKiKbMcpKiKbFsTools["kb_file_rename"]>[0]) {
-      const tool = proxy.kbFileRename as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_file_rename"]>[0]) => Promise<unknown>;
-      const raw = await tool(params);
-      return wrapCallResult(raw).callResult;
-    },
-
-    async kb_file_delete(params: Parameters<McpKiKbMcpKiKbFsTools["kb_file_delete"]>[0]) {
-      const tool = proxy.kbFileDelete as (args: Parameters<McpKiKbMcpKiKbFsTools["kb_file_delete"]>[0]) => Promise<unknown>;
       const raw = await tool(params);
       return wrapCallResult(raw).callResult;
     },

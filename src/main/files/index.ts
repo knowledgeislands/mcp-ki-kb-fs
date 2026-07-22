@@ -16,11 +16,12 @@ import type { Config } from '../../config/index.js'
 import { isProtectedPath } from '../../utils/protected.js'
 import { assertRealPathWithinRoot, errorResult, isNodeError, jsonResult, resolveWithinRoot } from '../../utils/utils.js'
 import { isInScope, outOfScopeError } from '../../utils/zones.js'
-import { collectFiles, relativeFromRoot } from '../shared.js'
+import { collectFiles, collectFolders, collectNotes, relativeFromRoot } from '../shared.js'
 
 // Minimal extension → MIME map for the most common KB side-file types.
 // Falls back to application/octet-stream for anything unrecognised.
 const MIME_MAP: Record<string, string> = {
+  '.md': 'text/markdown',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -53,14 +54,34 @@ const isUtf8 = (buf: Buffer): boolean => {
   }
 }
 
-export const readFile = async (cfg: Config, { path: filePath }: { path: string }) => {
+export type ReadPart = 'all' | 'frontmatter' | 'body'
+export type ListKind = 'files' | 'folders' | 'notes'
+
+type FrontmatterSplit = { frontmatter: string | null; body: string; malformed: boolean }
+
+const splitFrontmatter = (content: string): FrontmatterSplit => {
+  const lines = content.split('\n')
+  if (lines[0]?.trim() !== '---') return { frontmatter: null, body: content, malformed: false }
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i]?.trim() === '---') {
+      return { frontmatter: lines.slice(1, i).join('\n'), body: lines.slice(i + 1).join('\n'), malformed: false }
+    }
+  }
+  return { frontmatter: null, body: content, malformed: true }
+}
+
+export const readFile = async (cfg: Config, { path: filePath, part = 'all' }: { path: string; part?: ReadPart }) => {
   try {
     const absPath = resolveWithinRoot(cfg.rootPath, filePath)
-    const rel = relativeFromRoot(cfg.rootPath, absPath)
-    if (!isInScope(rel, cfg.zones)) {
-      return errorResult('reading file', new Error(outOfScopeError(cfg.zones)))
+    const rel = relativeFromRoot(cfg.rootPath, absPath).split(path.sep).join('/')
+    const isAllowlistedRootFile = filePath.replaceAll('\\', '/') === rel && cfg.rootFileAllowlist.includes(rel)
+    if (!isInScope(rel, cfg.zones) && !isAllowlistedRootFile) {
+      return errorResult(
+        'reading file',
+        new Error(`${outOfScopeError(cfg.zones)} Root-level and named near-root files must exactly match root_file_allowlist.`)
+      )
     }
-    if (isProtectedPath(rel)) {
+    if (isProtectedPath(rel) && !isAllowlistedRootFile) {
       return errorResult('reading file', new Error(`Path is protected: "${filePath}"`))
     }
     await assertRealPathWithinRoot(cfg.rootPath, absPath)
@@ -71,14 +92,62 @@ export const readFile = async (cfg: Config, { path: filePath }: { path: string }
     const buf = await fs.readFile(absPath)
     const mimeType = mimeTypeFor(filePath)
     if (isUtf8(buf)) {
-      return jsonResult({ path: filePath, encoding: 'utf-8', mimeType, content: buf.toString('utf-8'), size: stat.size })
+      const content = buf.toString('utf-8')
+      if (part !== 'all') {
+        if (path.extname(filePath).toLowerCase() !== '.md') {
+          return errorResult('reading file', new Error(`part is only available for UTF-8 Markdown files: "${filePath}"`))
+        }
+        const split = splitFrontmatter(content)
+        if (split.malformed) {
+          return errorResult('reading file', new Error(`Malformed frontmatter in "${filePath}": opening "---" has no closing "---"`))
+        }
+        return jsonResult({
+          path: filePath,
+          part,
+          encoding: 'utf-8',
+          mimeType,
+          content: part === 'frontmatter' ? (split.frontmatter ?? '(no frontmatter)') : split.body,
+          size: stat.size
+        })
+      }
+      return jsonResult({ path: filePath, part, encoding: 'utf-8', mimeType, content, size: stat.size })
     }
-    return jsonResult({ path: filePath, encoding: 'base64', mimeType, content: buf.toString('base64'), size: stat.size })
+    if (part !== 'all') {
+      return errorResult('reading file', new Error(`part is only available for UTF-8 Markdown files: "${filePath}"`))
+    }
+    return jsonResult({ path: filePath, part, encoding: 'base64', mimeType, content: buf.toString('base64'), size: stat.size })
   } catch (err) {
     if (isNodeError(err) && err.code === 'ENOENT') {
       return errorResult('reading file', new Error(`File not found: "${filePath}"`))
     }
     return errorResult('reading file', err)
+  }
+}
+
+export const listContent = async (
+  cfg: Config,
+  { path: dirPath, kind, recursive, ext }: { path: string; kind: ListKind; recursive: boolean; ext?: string }
+) => {
+  try {
+    const absDir = resolveWithinRoot(cfg.rootPath, dirPath)
+    const rel = relativeFromRoot(cfg.rootPath, absDir)
+    if (!isInScope(rel, cfg.zones)) {
+      return errorResult('listing content', new Error(outOfScopeError(cfg.zones)))
+    }
+    if (isProtectedPath(rel)) {
+      return errorResult('listing content', new Error(`Path is protected: "${dirPath}"`))
+    }
+    await assertRealPathWithinRoot(cfg.rootPath, absDir)
+    const paths =
+      kind === 'files'
+        ? await collectFiles(cfg.rootPath, absDir, recursive, ext ?? null)
+        : kind === 'folders'
+          ? await collectFolders(cfg.rootPath, absDir, recursive)
+          : await collectNotes(cfg.rootPath, absDir, recursive)
+    const entries = paths.map((entry) => path.relative(cfg.rootPath, entry))
+    return jsonResult({ path: dirPath, kind, recursive, ext: kind === 'files' ? (ext ?? null) : null, count: entries.length, entries })
+  } catch (err) {
+    return errorResult('listing content', err)
   }
 }
 
