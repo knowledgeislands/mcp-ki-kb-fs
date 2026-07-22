@@ -30,7 +30,7 @@ console.error(`  zones=${Object.values(config.zones).join(', ')}`)
 
 const server = new McpServer({
   name: 'mcp-ki-kb-fs',
-  version: '1.0.0'
+  version: '0.9.0'
 })
 
 // Monkey-patch registerTool so every tool's callback is wrapped with the
