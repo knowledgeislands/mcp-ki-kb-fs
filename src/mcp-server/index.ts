@@ -17,8 +17,8 @@
  *                                  by loadConfig() before the server connects.
  */
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { McpServer } from '@modelcontextprotocol/server'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
 import { KNOWLEDGE_BASES_ENV_VAR, loadConfig } from '../config/index.js'
 import { registerConfigTools, registerKbTools } from '../tools/index.js'
 import { makeAccessGatedRegister } from '../utils/access-level.js'
@@ -35,34 +35,48 @@ for (const base of config.knowledgeBases.values()) {
   console.error(`    ${base.alias} → ${base.rootPath} (zones: ${Object.values(base.zones).join(', ')})`)
 }
 
-const server = new McpServer({
-  name: 'mcp-ki-kb-fs',
-  version: '0.9.0'
-})
+// One instance per connection, built on demand: `serveStdio` decides the
+// protocol era from the opening exchange and pins a single instance from this
+// factory for that connection's lifetime. The gate and the tool surface are
+// therefore rebuilt per connection from the same already-validated Config —
+// never shared across connections, and never re-read from the environment.
+const createServer = (): McpServer => {
+  const server = new McpServer({
+    name: 'mcp-ki-kb-fs',
+    version: '0.9.0'
+  })
 
-// Monkey-patch registerTool so every tool's callback is wrapped with the
-// audit logger. Done in-place rather than passing a wrapped reference because
-// the registration helpers call server.registerTool directly.
-server.registerTool = makeAccessGatedRegister(server, config.accessLevel, {
-  mode: config.auditLogMode,
-  path: config.auditLogPath,
-  maxBytes: config.auditLogMaxBytes,
-  keep: config.auditLogKeep
-})
+  // Monkey-patch registerTool so every tool's callback is wrapped with the
+  // audit logger. Done in-place rather than passing a wrapped reference because
+  // the registration helpers call server.registerTool directly.
+  server.registerTool = makeAccessGatedRegister(server, config.accessLevel, {
+    mode: config.auditLogMode,
+    path: config.auditLogPath,
+    maxBytes: config.auditLogMaxBytes,
+    keep: config.auditLogKeep
+  })
 
-registerKbTools(server, config)
-registerConfigTools(server, config)
+  registerKbTools(server, config)
+  registerConfigTools(server, config)
+  return server
+}
 
 // No per-root accessibility check here: loadConfig() already refused to return
 // unless every declared alias resolves to an existing directory, so reaching
 // this point means the whole declaration is good.
-const main = async (): Promise<void> => {
-  const transport = new StdioServerTransport()
-  await server.connect(transport)
-  console.error('mcp-ki-kb-fs ready')
-}
+//
+// `legacy: 'serve'` keeps pre-2026 clients working: an `initialize` opening is
+// served from the same factory, with the same tool surface, rather than being
+// refused. Drop it to 'reject' only once no client in the estate still opens
+// that way.
+const handle = serveStdio(createServer, {
+  legacy: 'serve',
+  onerror: (error) => console.error('mcp-ki-kb-fs stdio error:', error)
+})
 
-main().catch((err) => {
-  console.error('mcp-ki-kb-fs fatal:', err)
-  process.exit(1)
+console.error('mcp-ki-kb-fs ready')
+
+process.on('SIGINT', async () => {
+  await handle.close()
+  process.exit(0)
 })

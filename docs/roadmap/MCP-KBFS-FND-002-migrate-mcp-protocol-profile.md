@@ -4,12 +4,12 @@ area: FND
 title: Migrate MCP protocol profile
 theme: foundation-tooling
 horizon: next
-status: ready
+status: awaiting-review
 blocks: []
 blocked_by: []
-baseline_ref: null
+baseline_ref: beb0c6af0dfac988072e0a51fa448ee4a2d24bb3
 created_at: 2026-09-02T01:12:46Z
-updated_at: 2026-09-22T06:57:00Z
+updated_at: 2026-09-22T07:06:20Z
 ---
 
 ## Goal
@@ -40,14 +40,14 @@ Nothing else blocks the move. The access gate, annotation presets, audit-log wra
 
 ## Steps
 
-- [ ] Swap the server package family in `package.json`: remove `@modelcontextprotocol/sdk` from `dependencies`, add `@modelcontextprotocol/server` `2.0.0`, and add `@modelcontextprotocol/client` `2.0.0` as a devDependency for the smoke harness only.
-- [ ] Release the zod hold in the same change: move `zod` to `^4.6.5` and delete the now-causeless `dependency_holds` entry from `[skills.ki-engineering]` in `.ki.toml`.
-- [ ] Repoint the type-only imports in `src/tools/kb/index.ts`, `src/tools/kb/index.test.ts`, `src/tools/config/index.ts`, and `src/utils/access-level.ts` at `@modelcontextprotocol/server`, leaving every registration call site unchanged.
-- [ ] Replace the single-instance entry point in `src/mcp-server/index.ts` with a `createServer` factory handed to `serveStdio(factory, { legacy: 'serve', onerror })`, keeping `loadConfig()` at module scope, the startup stderr diagnostics, and the gated `registerTool` assignment inside the factory so every connection gets its own gated instance; add SIGINT teardown through the returned handle.
-- [ ] Add `resultType: 'complete'` to both helpers in `src/utils/results.ts` and pin it in `src/utils/results.test.ts`, updating the helper's doc comment to cite the 2026-07-28 profile.
-- [ ] Rewrite `scripts/smoke.ts` onto `@modelcontextprotocol/client`, retaining every existing assertion (tool surface, `inputSchema` presence, required `kb` enum over the declared aliases) and adding: modern era and negotiated `2026-07-28`, a `resultType: "complete"` discovery result carrying this server's `serverInfo`, a successful and a malformed `kb_list` round trip, and a second connection from a legacy-handshake client proving the retained fallback serves the identical surface.
-- [ ] Update `CLAUDE.md` to state the 2026-07-28 revision, the per-connection factory, and the deliberate legacy fallback; add a CHANGELOG entry.
-- [ ] Run every gate below, including `ki repo audit`, and record the outcomes in the review packet.
+- [x] Swap the server package family in `package.json`: remove `@modelcontextprotocol/sdk` from `dependencies`, add `@modelcontextprotocol/server` `2.0.0`, and add `@modelcontextprotocol/client` `2.0.0` as a devDependency for the smoke harness only.
+- [x] Release the zod hold in the same change: move `zod` to `^4.6.5` and delete the now-causeless `dependency_holds` entry from `[skills.ki-engineering]` in `.ki.toml`.
+- [x] Repoint the type-only imports in `src/tools/kb/index.ts`, `src/tools/kb/index.test.ts`, `src/tools/config/index.ts`, and `src/utils/access-level.ts` at `@modelcontextprotocol/server`, leaving every registration call site unchanged.
+- [x] Replace the single-instance entry point in `src/mcp-server/index.ts` with a `createServer` factory handed to `serveStdio(factory, { legacy: 'serve', onerror })`, keeping `loadConfig()` at module scope, the startup stderr diagnostics, and the gated `registerTool` assignment inside the factory so every connection gets its own gated instance; add SIGINT teardown through the returned handle.
+- [x] Add `resultType: 'complete'` to both helpers in `src/utils/results.ts` and pin it in `src/utils/results.test.ts`, updating the helper's doc comment to cite the 2026-07-28 profile.
+- [x] Rewrite `scripts/smoke.ts` onto `@modelcontextprotocol/client`, retaining every existing assertion (tool surface, `inputSchema` presence, required `kb` enum over the declared aliases) and adding: modern era and negotiated `2026-07-28`, a `resultType: "complete"` discovery result carrying this server's `serverInfo`, a successful and a malformed `kb_list` round trip, and a second connection from a legacy-handshake client proving the retained fallback serves the identical surface.
+- [x] Update `CLAUDE.md` to state the 2026-07-28 revision, the per-connection factory, and the deliberate legacy fallback; add a CHANGELOG entry.
+- [x] Run every gate below, including `ki repo audit`, and record the outcomes in the review packet.
 
 ## Files touched
 
@@ -89,6 +89,60 @@ No behaviour-level contract changes. Tool names, input schemas, `outputSchema` d
 ### Roadmap
 
 No follow-on record needed. This item completes the receiver-owned migration in full; the release and publication of the resulting version stay outside it, as the Boundary already states.
+
+## Review
+
+### Delivered
+
+The approved boundary in full: the receiver-owned migration of this repository to the MCP 2026-07-28 server profile, with the public tool contract unchanged and legacy-client compatibility deliberately retained. Baseline `beb0c6af0dfac988072e0a51fa448ee4a2d24bb3` (the planning commit that shaped this record); the resulting evidence is the working tree recorded in the delivery commit that carries this packet.
+
+Excluded as planned and confirmed untouched: `src/main/**`, `src/config/**`, `src/utils/annotations.ts`, `src/utils/audit-log.ts`, `src/generated/**`, the `README.md` tool catalogue, and `docs/roadmap/MCP-KBFS-FND-004-*`. Prioritisation beyond this item, acceptance, release, and publication remain outside it.
+
+### Summary of changes
+
+`package.json` — `@modelcontextprotocol/sdk` `^1.30.0` removed from `dependencies`; `@modelcontextprotocol/server` `2.0.0` added; `@modelcontextprotocol/client` `2.0.0` added as a devDependency for the smoke harness only; `zod` moved from the pinned `4.4.3` to `^4.6.5`. `bun.lock` regenerated. `.ki.toml` — the now-causeless `dependency_holds` entry deleted from `[skills.ki-engineering]`, leaving the table empty.
+
+`src/mcp-server/index.ts` — the module-scope single instance and `StdioServerTransport` connection are replaced by a `createServer` factory handed to `serveStdio(createServer, { legacy: 'serve', onerror })`, with SIGINT teardown through the returned handle. `loadConfig()` and the startup stderr diagnostics stay at module scope; the gated `registerTool` assignment and both registration calls moved inside the factory, so each connection gets its own gated instance built from the one already-validated `Config`.
+
+`src/utils/results.ts` — both helpers stamp `resultType: 'complete'`; the doc comment now cites the 2026-07-28 profile and explains why the discriminator is invisible to callers. `src/utils/results.test.ts` pins it in both helper assertions.
+
+Type-only import repointing at `@modelcontextprotocol/server`, with no call-site change, in `src/tools/kb/index.ts`, `src/tools/kb/index.test.ts`, `src/tools/config/index.ts`, and `src/utils/access-level.ts` (two legacy imports collapsed into one).
+
+`scripts/smoke.ts` — rewritten onto `@modelcontextprotocol/client`. Every prior assertion is retained, now factored into `assertToolSurface(tools, era)` so it can be run against both eras: the seven-tool surface diff, `inputSchema` presence, and every tool requiring `kb` as an enum exactly equal to the declared aliases. Added: `versionNegotiation: { mode: 'auto' }`, modern era, negotiated `2026-07-28`, a `resultType: 'complete'` discovery result carrying this server's `serverInfo`, a successful `kb_list` round trip asserting `structuredContent`, an undeclared-alias call asserting an `isError` envelope rather than a protocol error, and a second legacy-handshake client proving the retained fallback serves the identical surface.
+
+`CLAUDE.md` — the protocol section now states the 2026-07-28 revision, the v2 package family, the per-connection factory, SDK-owned discovery, the single place the discriminator is stamped, and the deliberate `legacy: 'serve'` fallback; the `src/mcp-server/index.ts` layout bullet is corrected to describe the factory. `CHANGELOG.md` — an `Unreleased` entry with `Changed` and `Compatibility` subsections.
+
+Material decisions. The zod hold was released in this change rather than left behind: `.ki.toml` named `@modelcontextprotocol/sdk` 1.30.0 schema types as the hold's only cause, so removing the SDK removed the constraint, and `ki-engineering` DEPS-1 flags a hold once its package is current. The legacy fallback is retained rather than rejected, per the Boundary's evidence requirement — no client in the estate has been shown to have moved. One deviation from the plan, immaterial to scope: the smoke harness now creates a `Pillars` directory under each throwaway temp root, because the added successful round trip needs a real zone directory to list.
+
+### Verification
+
+- `bun run build` — PASS. `tsc -p tsconfig.build.json` emits with no diagnostic under the v2 type surface.
+- `npx tsc -p tsconfig.json --noEmit` — PASS (exit 0). Covers the test and script sources the build config excludes, so the rewritten smoke harness is typechecked too.
+- `bun run test` — PASS. `Test Files 12 passed (12)`, `Tests 289 passed (289)`.
+- `bun run test:coverage` — PASS. Statements 100% (687/687), Branches 100% (440/440), Functions 100% (79/79), Lines 100% (631/631); thresholds unchanged.
+- `bunx @biomejs/biome check .` — PASS. `Checked 37 files… No fixes applied. Found 1 info.` The single info is the pre-existing `biome.json` `$schema` pin (2.5.12) trailing the installed CLI (2.5.14); it predates this change and is out of scope.
+- `bun run ki:test:smoke` — PASS. `✓ smoke passed: modern 2026-07-28 discovery, legacy fallback, 7 tools listed, all requiring kb ∈ {smoke-alpha, smoke-beta}, complete result envelope`.
+- `ki repo audit --concise --progress never` — PASS · 15 skills, including `ki-repo-mcp`. The modern-profile conditions are directly observable: `grep -rn '@modelcontextprotocol/sdk\|StdioServerTransport' src/ scripts/ package.json` returns nothing, `serveStdio(` appears in `src/mcp-server/index.ts`, and `resultType: 'complete'` covers both result helpers.
+
+### Outstanding concerns
+
+None blocking. Three observations for the reviewer, none of which this item owns.
+
+The `biome.json` schema-pin info predates this change. `@modelcontextprotocol/sdk` remains in `node_modules` as a transitive dependency of `mcporter` (a devDependency used by `ki:generate:client`); it is no longer declared by this repository and no source file imports it, so the profile classification is unaffected. `CHANGELOG.md` records the migration under `Unreleased` because `package.json` still reads `0.9.0` while the changelog's newest released heading is `1.0.0` — that pre-existing mismatch is a release-time decision, and the Boundary keeps release and publication outside this record.
+
+### Post-change review
+
+Goal met: the repository now runs the supported 2026-07-28 profile, and the tool surface a client sees is byte-identical to the one it saw before — proven, not assumed, because the smoke harness asserts the same surface over both the modern and legacy handshakes. Scope held to the Files touched list; nothing in `src/main/`, `src/config/`, or the generated client changed.
+
+Regression risk is low and concentrated in the two places a reviewer should look. First, the per-connection factory: a second connection now builds a second gated `McpServer`, so any future state cached at module scope beside `config` would be shared where it previously could not be — the invariant to keep is that only the validated `Config` lives out there. Second, the result envelope: the discriminator is stamped in exactly one file, and the v2 client rejects a complete result without it, so the smoke test is what stops a hand-rolled envelope elsewhere from regressing silently.
+
+Acceptance readiness: every gate in Verify has been run on the finished tree and passes. The one judgement call a human may wish to overturn is retaining `legacy: 'serve'`; flipping it to `'reject'` is a one-line change plus the corresponding smoke assertion, and is deliberately left as a separate, evidence-led decision.
+
+### Mini recap
+
+Delivered the MCP 2026-07-28 migration for `mcp-ki-kb-fs`: v2 server package family, per-connection `serveStdio` factory, `resultType: 'complete'` on both result helpers, a v2-client smoke harness asserting both protocol eras, the zod hold released, and `CLAUDE.md`/`CHANGELOG.md` brought into line. Verified by build, strict typecheck, 289 tests, 100% coverage, Biome, the live smoke boundary, and a full `ki repo audit` PASS across 15 skills. No blocking concerns; the retained legacy fallback and the `0.9.0`/`1.0.0` version-versus-changelog mismatch are the two items a reviewer may wish to rule on.
+
+Learning routes, proposed only: the per-connection factory invariant (nothing but validated config at module scope) is the kind of thing worth stating once in the shared MCP layout guidance rather than rediscovering per repository; and the smoke harness is now the only place the protocol profile is provable, which is worth naming explicitly wherever the sibling MCPs copy this layout. Neither is promoted here.
 
 ## Discussion
 

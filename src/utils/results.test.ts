@@ -4,6 +4,7 @@ import { errorResult, jsonResult } from './results.js'
 describe('errorResult', () => {
   it('builds the MCP error response shape, prefixing the action', () => {
     expect(errorResult('reading note', new Error('something went wrong'))).toEqual({
+      resultType: 'complete',
       isError: true,
       content: [{ type: 'text', text: 'Error reading note: something went wrong' }]
     })
@@ -11,6 +12,7 @@ describe('errorResult', () => {
 
   it('coerces non-Error values via errMessage', () => {
     expect(errorResult('writing note', 'plain string')).toEqual({
+      resultType: 'complete',
       isError: true,
       content: [{ type: 'text', text: 'Error writing note: plain string' }]
     })
@@ -20,6 +22,7 @@ describe('errorResult', () => {
 describe('jsonResult', () => {
   it('serialises a payload to pretty JSON in a text block', () => {
     const result = jsonResult({ a: 1, b: 'two' })
+    expect(result.resultType).toBe('complete')
     expect(result.content[0]?.type).toBe('text')
     expect(JSON.parse(result.content[0]?.text ?? '')).toEqual({ a: 1, b: 'two' })
   })
