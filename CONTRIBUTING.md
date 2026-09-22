@@ -1,45 +1,18 @@
 # Contributing
 
-Thanks for your interest. This file covers the dev loop, conventions, and what to check before you open a PR.
+Thanks for your interest. This file is the contribution contract: what a change is expected to carry and how to describe it. The mechanics — toolchain, dev loop, tests, gates — live in [working on the code](./docs/guides/developer/working-on-the-code.md), and the layout the change has to fit is in [architecture](./docs/guides/developer/architecture.md).
 
 ## Setup
 
-You'll need [Bun](https://bun.sh) 1.3+ for the dev loop, and Node.js 22+ to run the compiled `dist/`.
-
 ```bash
-git clone https://github.com/knowledgeislands/mcp-kb-fs.git
-cd mcp-kb-fs
+git clone https://github.com/knowledgeislands/mcp-ki-kb-fs.git
+cd mcp-ki-kb-fs
 bun install
 ```
 
-`bun install` triggers `prepare` which configures the husky pre-commit hook — so every commit will auto-run `lint-staged` and format your changes.
+`bun install` runs `prepare`, which installs the husky hooks — so every commit auto-formats staged files and checks the commit message.
 
-## Dev loop
-
-```bash
-bun run ki:server:mcp:dev      # bun --watch — runs the server from source
-bun run ki:server:mcp:inspect  # MCP Inspector against the TS source
-bun run ki:lint:types          # tsc --noEmit
-bun run test                # vitest (use `bun run test`, not `bun test`)
-bun run test:watch          # vitest in watch mode
-bun run test:coverage       # vitest with v8 coverage report
-bun run ki:lint:check          # Biome lint + format check
-bun run ki:lint:fix            # Biome auto-fix
-bun run ki:lint:md             # prettier + markdownlint for *.md
-```
-
-## Conventions
-
-### Code
-
-- **TypeScript ES modules** — `"type": "module"`, internal imports use `.js` extensions (e.g. `from '../../main/notes/index.js'`) so `tsc` emits valid JS.
-- **Arrow functions** for top-level declarations (`export const foo = () => …`).
-- **Config injection**: nothing reads `process.env` at import time. `loadConfig()` (in `src/config/index.ts`) returns a plain `Config`; `src/main/` functions take it (or the slice they need) as their first argument. Tests build a `Config` literal — no env mutation.
-- **Strict path safety**: any tool input that touches the filesystem must go through `resolveWithinRoot(cfg.rootPath, …)` from `src/utils/utils.ts`. Inputs that resolve outside the root throw `Path escapes root`.
-- **Errors**: tools return MCP errors via `errorResult(...)`; structured results via `jsonResult(...)`.
-- **Annotations**: be honest with `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint` on every tool registration.
-
-### Commits
+## Commits
 
 This repo uses [Conventional Commits](https://www.conventionalcommits.org/) so version bumps are easy to derive when releasing by hand. There is no auto-release pipeline.
 
@@ -58,17 +31,23 @@ This repo uses [Conventional Commits](https://www.conventionalcommits.org/) so v
 
 Add `!` for breaking changes (`feat!:` / `fix!:`) — bumps major.
 
-### Testing
+## What a change should carry
 
-- New code should ship with tests. Vitest is configured with V8 coverage and has thresholds in `vitest.config.ts` — if your change drops coverage below the threshold, CI fails. The aggregators (`src/mcp-server/index.ts`, `src/tools/**/index.ts`) and the pure-data `src/utils/annotations.ts` are excluded; everything else stays fully covered. Tests are co-located (`index.test.ts` beside `index.ts`).
-- Config is injected, not read from env: tests build a `Config` literal (or call `loadConfig` with an explicit env object) and pass it into the `main/` function. FS-touching tests point `rootPath` at a per-process tmpdir and clean up with `beforeEach`/`afterEach`.
+New code ships with tests. Coverage thresholds are 100% on everything that is not explicitly excluded, so a new branch needs its case in the same change; the exclusions and their reasons are in [working on the code](./docs/guides/developer/working-on-the-code.md).
+
+Two kinds of change carry an extra obligation.
+
+**Error messages are a contract.** The user guides quote several verbatim, so changing one means updating [the guides](./docs/guides/user/README.md) in the same change.
+
+**Tool surface changes are wide.** Adding, removing, or renaming a tool touches `src/main/`, `src/tools/`, the `EXPECTED_TOOLS` list in `scripts/smoke.ts`, the inventory table in `README.md`, and `CLAUDE.md`.
 
 ## Before opening a PR
 
-- [ ] `bun run ki:lint:check` passes
-- [ ] `bun run ki:lint:types` passes
+- [ ] `bun run test` passes
 - [ ] `bun run test:coverage` passes (no threshold failures)
+- [ ] `bun run ki:test:smoke` passes
+- [ ] `ki repo audit --repo .` passes
 - [ ] Commit messages follow Conventional Commits
-- [ ] If you added/removed/renamed a tool, update `README.md` and `CLAUDE.md`
+- [ ] `CHANGELOG.md` has an `Unreleased` entry for anything user-visible
 
-CI runs all of the above on every PR.
+CI runs the first four on every push and pull request.

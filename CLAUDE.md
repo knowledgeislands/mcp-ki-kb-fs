@@ -34,7 +34,7 @@ To use the code from a script: `const cfg = loadConfig(); const base = selectKno
 
 ### Multiple knowledge bases
 
-One server serves every base declared in `MCP_KI_KB_FS_KNOWLEDGE_BASES` — a JSON object mapping caller-facing alias to that base's absolute (or `~/…`) path. README's [Environment Variables](./README.md#environment-variables) documents the grammar and every startup rejection; what matters when changing code:
+One server serves every base declared in `MCP_KI_KB_FS_KNOWLEDGE_BASES` — a JSON object mapping caller-facing alias to that base's absolute (or `~/…`) path. [Declaring your knowledge bases](./docs/guides/user/declaring-knowledge-bases.md) documents the grammar and every startup rejection; what matters when changing code:
 
 - **The declaration is the authorisation boundary, validated at startup.** `loadConfig()` resolves each entry into a `KnowledgeBase` (`alias`, `rootPath`, `zones`, `rootFileAllowlist`, `kiConfigRaw`) and throws unless the alias is a safe identifier and the path is an existing directory. Nothing is resolved lazily, and there is **no `MCP_KI_KB_FS_ROOT_PATH` fallback** — do not add one.
 - **`kb` is required on all seven tools.** It is declared once, as `kbArg(cfg)` in [src/tools/shared.ts](./src/tools/shared.ts), as a zod enum over the declared aliases — so an undeclared alias fails argument validation before a handler runs, and the wire schema advertises the roster. Never give it a default, and never accept a bare `z.string()`: a base-qualified path grammar or an optional override would both put base selection somewhere a mistake becomes a containment mistake.

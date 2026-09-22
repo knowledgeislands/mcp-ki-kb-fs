@@ -4,13 +4,13 @@ title: Establish audience-centric guides
 area: FND
 theme: foundation-tooling
 horizon: now
-status: ready
+status: awaiting-review
 blocks: []
 blocked_by: []
 transferred_from: ki-website
-baseline_ref: null
+baseline_ref: ed14908d898a98785382238a79ed4893547554ff
 created_at: 2026-09-21T15:44:00Z
-updated_at: 2026-09-22T07:20:00Z
+updated_at: 2026-09-22T08:35:00Z
 ---
 
 ## Goal
@@ -29,7 +29,7 @@ Separately, `ki-guides` is being asked to require audience directories under `do
 
 ## Boundary
 
-Adopted into `Now` by explicit approval, so this is prioritised work rather than intake. It remains `status: draft`: `ki-plan` shapes it to `Ready` before any implementation, and this repository still owns its plan and sequencing.
+Adopted into `Now` by explicit approval, so this is prioritised work rather than intake. It was captured as `status: draft` and shaped to `ready` through `ki-plan` before any implementation; this repository owns its plan and sequencing throughout.
 
 KI Website derives and cites; it does not own this collection and must not be given approval rights over it. Nothing here requires a guide to be written for the website's benefit — if a guide would not serve this repository's own readers, it should not exist.
 
@@ -57,27 +57,29 @@ Two factual errors ride along in the current documents and are corrected in pass
 
 ## Steps
 
-- [ ] Declare `[skills.ki-guides]` in `.ki.toml`.
-- [ ] Create `docs/guides/README.md` as the collection index: what the collection covers, the two audience routes, and why there is no third.
-- [ ] Create `docs/guides/user/README.md` and `docs/guides/developer/README.md` as audience indexes, each stating who it is for and pointing at the other.
-- [ ] Write `user/installing-the-server.md` from the README's Quick Start, Prerequisites, Installation, and Claude Desktop Configuration sections, extended to Claude Code and mcporter and to confirming the connection works.
-- [ ] Write `user/declaring-knowledge-bases.md` from the `MCP_KI_KB_FS_KNOWLEDGE_BASES` environment-variable prose and the `### The kb argument` section: the declaration as authorisation boundary, alias rules, every startup rejection, no default base, one base per call.
-- [ ] Write `user/scoping-a-knowledge-base.md` from the zone and allow-list material: what `.ki.toml` `[knowledgeislands-kb]` declares, why paths at the KB root are out of scope, the read-only never-listable root-file allow-list, and protected paths.
-- [ ] Write `user/reading-and-writing-notes.md` from the Example Conversations section: orienting with `kb_config`, listing, reading with `part`, capturing with `dry_run`, renaming, deleting.
-- [ ] Write `user/choosing-an-access-level.md` from the `MCP_KI_KB_FS_ACCESS_LEVEL` and audit-log prose: what each level registers, why visibility differs from `dry_run`, and what the log records.
-- [ ] Write `user/troubleshooting.md` from the README's Troubleshooting section, extended to cover the zone-scope and access-level failures it currently omits.
-- [ ] Write `developer/architecture.md` from the Security Model and Directory Structure sections: the five directories and their direction, the closed `KnowledgeBase` bundle, the annotation-driven access gate, the result-envelope boundary, and the safety invariants.
-- [ ] Write `developer/working-on-the-code.md` from the Development and Extending the Server sections, with the script names corrected to those `package.json` actually declares and the gates corrected to those CI actually runs.
-- [ ] Reduce `README.md` to orientation: what the server is, the tool inventory table, the safety posture, a short getting-started pointer, and a documentation index. Delete the six `### kb_*` subsections and the directory tree; fix the badge URLs.
-- [ ] Trim the `CONTRIBUTING.md` dev-loop block to route at the developer guide, keep the contribution contract, and fix the clone URL.
-- [ ] Add a `CHANGELOG.md` entry under `Unreleased`.
-- [ ] Run the guides and authoring audits, then the full audit, and repair what they report.
+- [x] Declare `[skills.ki-guides]` in `.ki.toml`.
+- [x] Create `docs/guides/README.md` as the collection index: what the collection covers, the two audience routes, and why there is no third.
+- [x] Create `docs/guides/user/README.md` and `docs/guides/developer/README.md` as audience indexes, each stating who it is for and pointing at the other.
+- [x] Write `user/installing-the-server.md` from the README's Quick Start, Prerequisites, Installation, and Claude Desktop Configuration sections, extended to Claude Code and mcporter and to confirming the connection works.
+- [x] Write `user/declaring-knowledge-bases.md` from the `MCP_KI_KB_FS_KNOWLEDGE_BASES` environment-variable prose and the `### The kb argument` section: the declaration as authorisation boundary, alias rules, every startup rejection, no default base, one base per call.
+- [x] Write `user/scoping-a-knowledge-base.md` from the zone and allow-list material: what `.ki.toml` `[knowledgeislands-kb]` declares, why paths at the KB root are out of scope, the read-only never-listable root-file allow-list, and protected paths.
+- [x] Write `user/reading-and-writing-notes.md` from the Example Conversations section: orienting with `kb_config`, listing, reading with `part`, capturing with `dry_run`, renaming, deleting.
+- [x] Write `user/choosing-an-access-level.md` from the `MCP_KI_KB_FS_ACCESS_LEVEL` and audit-log prose: what each level registers, why visibility differs from `dry_run`, and what the log records.
+- [x] Write `user/troubleshooting.md` from the README's Troubleshooting section, extended to cover the zone-scope and access-level failures it currently omits.
+- [x] Write `developer/architecture.md` from the Security Model and Directory Structure sections: the five directories and their direction, the closed `KnowledgeBase` bundle, the annotation-driven access gate, the result-envelope boundary, and the safety invariants.
+- [x] Write `developer/working-on-the-code.md` from the Development and Extending the Server sections, with the script names corrected to those `package.json` actually declares and the gates corrected to those CI actually runs.
+- [x] Reduce `README.md` to orientation: what the server is, the tool inventory table, the safety posture, a short getting-started pointer, and a documentation index. Delete the six `### kb_*` subsections and the directory tree; fix the badge URLs.
+- [x] Trim the `CONTRIBUTING.md` dev-loop block to route at the developer guide, keep the contribution contract, and fix the clone URL.
+- [x] Add a `CHANGELOG.md` entry under `Unreleased`.
+- [x] Run the guides and authoring audits, then the full audit, and repair what they report.
 
 ## Files touched
 
 `docs/guides/README.md`, `docs/guides/user/README.md`, `docs/guides/user/installing-the-server.md`, `docs/guides/user/declaring-knowledge-bases.md`, `docs/guides/user/scoping-a-knowledge-base.md`, `docs/guides/user/reading-and-writing-notes.md`, `docs/guides/user/choosing-an-access-level.md`, `docs/guides/user/troubleshooting.md`, `docs/guides/developer/README.md`, `docs/guides/developer/architecture.md`, `docs/guides/developer/working-on-the-code.md` (all new), `.ki.toml`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and this record.
 
-Explicitly not touched: all of `src/`, `scripts/`, `package.json`, `vitest.config.ts`, `biome.json`, `.env.example`, `claude-config-sample.json`, `CLAUDE.md` (the protocol migration `MCP-KBFS-FND-002` rewrote it hours ago and it is agent instruction, not a guide), `SECURITY.md`, and `docs/roadmap/MCP-KBFS-FND-002-*`, which is `awaiting-review` under another thread.
+Explicitly not touched: all of `src/`, `scripts/`, `package.json`, `vitest.config.ts`, `biome.json`, `.env.example`, `claude-config-sample.json`, `SECURITY.md`, and `docs/roadmap/MCP-KBFS-FND-002-*`, which is `awaiting-review` under another thread.
+
+One line of `CLAUDE.md` was touched after all, against the plan's intent to leave it alone. It linked `./README.md#environment-variables`, an anchor this item deletes; the link now points at `docs/guides/user/declaring-knowledge-bases.md`. Its other README link, `#available-tools`, still resolves because the inventory table and its heading are retained. Nothing else in that file changed and none of `MCP-KBFS-FND-002`'s rewrite is undone. Leaving a link dangling to honour a boundary would have been the worse outcome.
 
 ## Verify
 
@@ -110,6 +112,85 @@ This item is entirely guide impact. It creates the collection, its two audience 
 ### Roadmap
 
 No further roadmap change is expected. If writing the guides exposes behaviour that cannot honestly be explained — an unclear failure mode, a configuration step with no recovery — that is a separate item raised at the time.
+
+## Review
+
+### Delivered
+
+An eleven-file audience-centric guide collection under `docs/guides/`, gated by a newly declared `[skills.ki-guides]` in `.ki.toml`. `README.md` is reduced from 356 lines to orientation; the how-to material it carried was moved into the guide that owns it, and the per-tool schema transcription and directory tree were deleted rather than relocated. `CONTRIBUTING.md` now holds the contribution contract alone and routes mechanics at the developer guides.
+
+### Summary of changes
+
+New, under `docs/guides/`:
+
+- `README.md` — collection index, the two audience routes, the paragraph explaining why there is no third, and a "where the answers live" table whose schema row points at the running server rather than at a document.
+- `user/README.md` — audience index framed as the three decisions a user owns: which bases exist, what is reachable inside each, and how much may be done.
+- `user/installing-the-server.md` — prerequisites, building from source, the declaration, Claude Desktop, Claude Code and mcporter, confirming three read-only tools appear, and every environment variable with its default.
+- `user/declaring-knowledge-bases.md` — the declaration as authorisation boundary, alias rules, every startup rejection quoted, no default base, one base per call, and the access level being server-wide.
+- `user/scoping-a-knowledge-base.md` — the first-segment zone check, renaming zones through `.ki.toml`, the four properties of the root-file allow-list, protected paths, and the two containment layers underneath.
+- `user/reading-and-writing-notes.md` — the working loop, phrased as asks: orient, survey, read with `part`, capture under the preview default, create folders, move, delete.
+- `user/choosing-an-access-level.md` — what each level registers, why an unregistered tool beats a confirmation prompt, the annotation derivation and its fail-safe, `dry_run` as effect versus access level as visibility, and the audit log's fields, redaction, rotation, and swallowed write failures.
+- `user/troubleshooting.md` — symptom-led, built from the verbatim error strings in `src/`, and extended to the zone-scope, allow-list, and access-level failures the README's section omitted.
+- `developer/README.md` — audience index and the three things that explain otherwise-odd choices.
+- `developer/architecture.md` — the four layers and their direction, injected configuration, the access-gate proxy and its derivation, the four-stage path containment, schema and envelope reuse, connection lifecycle, and what adding a tool touches.
+- `developer/working-on-the-code.md` — toolchain, dev loop, the test and coverage contract including the three invariant-carrying tests, the real gates, and what CI runs.
+
+Changed:
+
+- `.ki.toml` — `[skills.ki-guides]` declared.
+- `README.md` — reduced to features, the tool inventory table, a short getting-started pointer, a documentation index, a condensed safety posture, and a licence line. The CI badge now names `mcp-ki-kb-fs`; the npm badge is gone.
+- `CONTRIBUTING.md` — setup, the Conventional Commits table, what a change should carry, and a pre-PR checklist naming commands that exist.
+- `CHANGELOG.md` — `Added`, `Changed`, and `Removed` entries under `Unreleased`, appended beside `MCP-KBFS-FND-002`'s entries without disturbing them.
+- `CLAUDE.md` — one link retargeted, as recorded under Files touched.
+
+Moved out of the README, not copied: Quick Start detail and Installation into `installing-the-server.md`; the environment-variable table and `### The kb argument` into `installing-the-server.md` and `declaring-knowledge-bases.md`; Example Conversations into `reading-and-writing-notes.md`; Security Model into `architecture.md` with a condensed posture retained in the README; Development and Extending the Server into `working-on-the-code.md` and `architecture.md`; Troubleshooting into `troubleshooting.md`.
+
+Deleted, not moved: the six `### kb_*` subsections (argument lists, enums, defaults, and a JSON call example each) and `## Directory Structure`. Both transcribe something the repository already publishes — the first from schemas the server serves through `tools/list`, the second from the source tree itself. Every behavioural caveat they carried survives: no default base, one base per call, the zone rule, the read-only never-listable allow-list, `mkdir -p` idempotence, rename's refusal to overwrite and its non-idempotence, `dry_run` defaulting true on both destructive tools, `part` being UTF-8 Markdown only, and base64 for non-UTF-8 content.
+
+### Verification
+
+Gates, verbatim:
+
+- `ki repo audit --skill ki-guides --concise --progress never` → `summary: KI REPO AUDIT on mcp-ki-kb-fs PASS · 1 skill`
+- `ki repo audit --skill ki-authoring --concise --progress never` → `summary: KI REPO AUDIT on mcp-ki-kb-fs PASS · 1 skill`
+- `ki repo audit --concise --progress never` → `summary: KI REPO AUDIT on mcp-ki-kb-fs PASS · 16 skills`
+- `bun run test` → `Test Files  12 passed (12)` / `Tests  289 passed (289)`
+- `bun run test:coverage` → `Statements : 100% ( 687/687 )`, `Branches : 100% ( 440/440 )`, `Functions : 100% ( 79/79 )`, `Lines : 100% ( 631/631 )`
+- `bun run ki:test:smoke` → passed; negotiated `2026-07-28`, seven tools, both declared aliases on the wire.
+
+One failure occurred and was repaired: the first `ki-authoring` run reported `CHANGELOG.md:19:1: [MD076] Unexpected blank line between list items [*]`, caused by the new `### Removed` heading being inserted between `MCP-KBFS-FND-002`'s bullets and their `### Changed` heading. The changelog was restructured so those four bullets stay under `Changed` with the two new ones appended, and the re-run passed.
+
+The code gates were run because two tests read documents this item rewrote: `src/main/files/repository-contract.test.ts` asserts `README.md` contains `# mcp-kb-fs` and `CLAUDE.md` contains `Guidance for Claude Code`. Both strings are retained deliberately — see Outstanding concerns.
+
+Read-through check: every behavioural caveat listed above was located in its new home before the source section was deleted, and no guide restates an argument name, enum, or default that the server publishes.
+
+### Outstanding concerns
+
+None blocks review. Four are worth a human decision.
+
+**The README H1 is pinned by a test.** It reads `# mcp-kb-fs` while the repository, the package, and the CI badge all say `mcp-ki-kb-fs`. `repository-contract.test.ts` asserts that exact string, so correcting the heading is a code change and outside this item's boundary. It deserves its own item rather than a silent fix.
+
+**Dead behaviour in `src/main/notes/`.** Only `createFolder` is registered; `readNote`, `listNotes`, `listFolders`, `renameNote`, `deleteNote`, `writeNote`, and `files.listFiles` are reachable from tests alone. They are held at 100% coverage by tests that no tool path exercises. `developer/architecture.md` says so plainly rather than implying a live path, but whether they are retained, registered, or removed is a decision this item cannot take.
+
+**The CI coverage artefact uploads nothing.** `vitest.config.ts` writes to `reports/coverage`; `.github/workflows/ci.yml` uploads `coverage/`. Out of boundary here — `.github/` is untouched — and a one-line fix elsewhere.
+
+**Node version claims disagreed.** The old README said Node 24.15.0, `package.json` `engines` says `>=22`, and `mise.toml` pins `node = "lts"`. The guides state Node 22+, following `engines`, which is the constraint a consumer's client actually enforces. If the intended floor is higher, `engines` is the place to say so.
+
+Also worth noting: no package is published under either name, and the install guide says so in a note rather than implying a registry install exists.
+
+### Post-change review
+
+The audience question was decided on this server's own facts rather than by copying a sibling. The case against an operator tier here is stronger than in `mcp-git-audit`, not weaker: there is no daemon, no account, no network call, and no credential, and the single operator-flavoured surface — the audit log — is one file configured in the same `env` block by the same person, so it belongs with the access-level decision that determines whether it ever records anything. An `operator/` directory would have held a copy of `choosing-an-access-level.md` and nothing else.
+
+The deletion decision held up better than expected. Writing `troubleshooting.md` from the source's verbatim error strings made the distinction concrete: what a reader needs is not the shape of `dry_run` but the knowledge that a rename refuses to overwrite and that a repeat is therefore an error. Those are behaviour; a schema cannot state them and a transcription buries them. Roughly 180 lines went, and the caveats that mattered came out at greater length than they went in.
+
+The `ki:lint:*` defect is the argument for the whole exercise. Four script names appeared in two documents, in a PR checklist a contributor is told to run, and none of them existed — because reference prose is not the kind of thing anyone executes. Writing the same material as a procedure surfaced it immediately.
+
+What was harder than expected: keeping `CLAUDE.md` untouched. A document that links into another document's anchors is coupled to it, and moving content out of the README broke one of those links. The one-line retarget is recorded as a deviation rather than hidden.
+
+### Mini recap
+
+`mcp-ki-kb-fs` now has a gated, audience-split guide collection: six user guides and two developer guides under `docs/guides/`, with `[skills.ki-guides]` declared. The README's how-to material moved rather than being copied; the per-tool schema tables and the directory tree were deleted on the grounds that the server and the source already publish them. All three audits pass — the full audit at 16 skills, up from 15 — and the four code gates are green.
 
 ## Discussion
 
