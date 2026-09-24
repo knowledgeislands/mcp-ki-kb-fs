@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: beb0c6af0dfac988072e0a51fa448ee4a2d24bb3
 created_at: 2026-09-02T01:12:46Z
-updated_at: 2026-09-22T07:06:20Z
+updated_at: 2026-09-24T09:18:00Z
 ---
 
 ## Goal
@@ -98,7 +98,7 @@ The approved boundary in full: the receiver-owned migration of this repository t
 
 Excluded as planned and confirmed untouched: `src/main/**`, `src/config/**`, `src/utils/annotations.ts`, `src/utils/audit-log.ts`, `src/generated/**`, the `README.md` tool catalogue, and `docs/roadmap/MCP-KBFS-FND-004-*`. Prioritisation beyond this item, acceptance, release, and publication remain outside it.
 
-### Summary of changes
+### Change Summary
 
 `package.json` — `@modelcontextprotocol/sdk` `^1.30.0` removed from `dependencies`; `@modelcontextprotocol/server` `2.0.0` added; `@modelcontextprotocol/client` `2.0.0` added as a devDependency for the smoke harness only; `zod` moved from the pinned `4.4.3` to `^4.6.5`. `bun.lock` regenerated. `.ki.toml` — the now-causeless `dependency_holds` entry deleted from `[skills.ki-engineering]`, leaving the table empty.
 
