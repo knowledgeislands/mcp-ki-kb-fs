@@ -51,11 +51,13 @@
   "homepage": "https://github.com/knowledgeislands/mcp-ki-kb-fs#readme",
   "keywords": [
     "anthropic",
+    "bun",
     "claude",
     "knowledge-base",
     "markdown",
     "mcp",
-    "model-context-protocol"
+    "model-context-protocol",
+    "typescript"
   ],
   "license": "MIT",
   "lint-staged": {
