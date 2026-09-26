@@ -4,12 +4,12 @@ area: FND
 title: Migrate MCP protocol profile
 theme: foundation-tooling
 horizon: next
-status: awaiting-review
+status: done
 blocks: []
 blocked_by: []
 baseline_ref: beb0c6af0dfac988072e0a51fa448ee4a2d24bb3
 created_at: 2026-09-02T01:12:46Z
-updated_at: 2026-09-24T09:18:00Z
+updated_at: 2026-09-26T18:10:52Z
 ---
 
 ## Goal
@@ -143,6 +143,10 @@ Acceptance readiness: every gate in Verify has been run on the finished tree and
 Delivered the MCP 2026-07-28 migration for `mcp-ki-kb-fs`: v2 server package family, per-connection `serveStdio` factory, `resultType: 'complete'` on both result helpers, a v2-client smoke harness asserting both protocol eras, the zod hold released, and `CLAUDE.md`/`CHANGELOG.md` brought into line. Verified by build, strict typecheck, 289 tests, 100% coverage, Biome, the live smoke boundary, and a full `ki repo audit` PASS across 15 skills. No blocking concerns; the retained legacy fallback and the `0.9.0`/`1.0.0` version-versus-changelog mismatch are the two items a reviewer may wish to rule on.
 
 Learning routes, proposed only: the per-connection factory invariant (nothing but validated config at module scope) is the kind of thing worth stating once in the shared MCP layout guidance rather than rediscovering per repository; and the smoke harness is now the only place the protocol profile is provable, which is worth naming explicitly wherever the sibling MCPs copy this layout. Neither is promoted here.
+
+## Done
+
+Accepted 2026-09-26 by Kris Brown on the review packet above.
 
 ## Discussion
 

@@ -4,13 +4,13 @@ title: Establish audience-centric guides
 area: FND
 theme: foundation-tooling
 horizon: now
-status: awaiting-review
+status: done
 blocks: []
 blocked_by: []
 transferred_from: ki-website
 baseline_ref: ed14908d898a98785382238a79ed4893547554ff
 created_at: 2026-09-21T15:44:00Z
-updated_at: 2026-09-26T17:30:33Z
+updated_at: 2026-09-26T18:10:52Z
 ---
 
 ## Goal
@@ -208,6 +208,10 @@ What was harder than expected: keeping `CLAUDE.md` untouched. A document that li
 The review remediation removed five out-of-collection Markdown links from four guides, made the affected procedures self-contained, retained root files as unlinked governing identifiers, and restored the `ki-guides` pass. The item remains `awaiting-review`; it has not been self-accepted.
 
 `mcp-ki-kb-fs` now has a gated, audience-split guide collection: six user guides and two developer guides under `docs/guides/`, with `[skills.ki-guides]` declared. The README's how-to material moved rather than being copied; the per-tool schema tables and the directory tree were deleted on the grounds that the server and the source already publish them. All three audits pass — the full audit at 16 skills, up from 15 — and the four code gates are green.
+
+## Done
+
+Accepted 2026-09-26 by Kris Brown on the review packet above.
 
 ## Discussion
 
