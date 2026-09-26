@@ -25,6 +25,6 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 - Clients that open with the pre-2026 `initialize` handshake are still served, from the same factory and with an identical tool surface (`legacy: 'serve'`). This fallback is deliberate and covered by the smoke test.
 
-## [1.0.0]
+## [0.9.0]
 
 Initial release.
