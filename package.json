@@ -6,9 +6,6 @@
   "bin": {
     "mcp-ki-kb-fs": "dist/mcp-server/index.js"
   },
-  "bugs": {
-    "url": "https://github.com/knowledgeislands/mcp-ki-kb-fs/issues"
-  },
   "dependencies": {
     "@modelcontextprotocol/server": "2.1.0",
     "smol-toml": "^1.9.0",

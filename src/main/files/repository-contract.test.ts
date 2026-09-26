@@ -23,10 +23,12 @@ describe('repository root-file contract', () => {
     expect(base.rootFileAllowlist).toEqual(['README.md', 'AGENTS.md', 'CLAUDE.md'])
 
     const readme = await readFile(base, { path: 'README.md' })
+    const agents = await readFile(base, { path: 'AGENTS.md' })
     const claude = await readFile(base, { path: 'CLAUDE.md' })
 
     expect(readme.content).toContain('# mcp-kb-fs')
-    expect(claude.content).toContain('Guidance for Claude Code')
+    expect(agents.content).toContain('# AGENTS.md')
+    expect(claude.content).toContain('@AGENTS.md')
   })
 
   it('does not expose unrelated root files or make the root listable', async () => {
