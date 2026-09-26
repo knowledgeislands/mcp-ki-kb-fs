@@ -72,7 +72,7 @@ Only `SIGINT` is handled, closing the handle before exit.
 
 ## Adding or changing a tool
 
-A new tool touches, in order: a behaviour function and its result schema in `src/main/`; a registration in the relevant `src/tools/` module with an annotation preset chosen honestly; the `EXPECTED_TOOLS` list in `scripts/smoke.ts`; tests in the co-located `*.test.ts`; and the tool inventory in [the README](../../../README.md) and `CLAUDE.md`.
+A new tool touches, in order: a behaviour function and its result schema in `src/main/`; a registration in the relevant `src/tools/` module with an annotation preset chosen honestly; the `EXPECTED_TOOLS` list in `scripts/smoke.ts`; tests in the co-located `*.test.ts`; and the tool inventory in the root `README.md` and `CLAUDE.md`.
 
 Be honest with the annotations. They are not documentation — they decide registration, the audit level, and therefore whether the tool exists at all for a given install.
 

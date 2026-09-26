@@ -100,4 +100,4 @@ So the minimum before pushing is those four, in that order. Type errors surface 
 
 **Annotations are honest.** `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` decide whether a tool is registered at all. Pick a preset from `src/utils/annotations.ts` that is true of your tool.
 
-**Conventional Commits.** [CONTRIBUTING.md](../../../CONTRIBUTING.md) carries the type table and what a pull request should include.
+**Conventional Commits.** Use `feat`, `fix`, `perf`, `docs`, `deps`, `refactor`, `test`, `chore`, `build`, or `ci`; append `!` for a breaking change. Before handover, the change must pass `bun run test`, `bun run test:coverage`, `bun run ki:test:smoke`, and `ki repo audit --repo .`; user-visible changes also need an `Unreleased` entry in `CHANGELOG.md`. The root `CONTRIBUTING.md` retains the repository-wide contribution contract.

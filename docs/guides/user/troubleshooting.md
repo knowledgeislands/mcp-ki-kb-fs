@@ -78,4 +78,4 @@ Both the environment and every declared base's `.ki.toml` are read once, at star
 
 ## Something else
 
-If the behaviour you are seeing is not covered here and is not obviously one of these safeguards, it is worth raising — open an issue with the tool name, the arguments, and the error text. [`SECURITY.md`](../../../SECURITY.md) covers how to report anything with a security dimension privately instead.
+If the behaviour you are seeing is not covered here and is not obviously one of these safeguards, open an issue with the tool name, the arguments, and the error text. For a security concern, do not open a public issue: email `kris@kris.me.uk` with the impact, reproduction steps, package version, and Node version, using the subject `mcp-kb-fs security`. The root `SECURITY.md` remains the repository-wide reporting policy.

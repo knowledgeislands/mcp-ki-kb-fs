@@ -10,7 +10,7 @@ blocked_by: []
 transferred_from: ki-website
 baseline_ref: ed14908d898a98785382238a79ed4893547554ff
 created_at: 2026-09-21T15:44:00Z
-updated_at: 2026-09-24T09:14:00Z
+updated_at: 2026-09-26T17:30:33Z
 ---
 
 ## Goal
@@ -117,9 +117,13 @@ No further roadmap change is expected. If writing the guides exposes behaviour t
 
 ### Delivered
 
+Review remediation on 2026-09-26 brought the collection into the current `GUIDE-4` boundary. The five links from guides to root or sibling Markdown documents were removed without removing their operative content: contribution expectations, catalogue maintenance, record routing, and private security reporting now read completely inside `docs/guides/`. Root documents continue to route readers into the collection.
+
 An eleven-file audience-centric guide collection under `docs/guides/`, gated by a newly declared `[skills.ki-guides]` in `.ki.toml`. `README.md` is reduced from 356 lines to orientation; the how-to material it carried was moved into the guide that owns it, and the per-tool schema transcription and directory tree were deleted rather than relocated. `CONTRIBUTING.md` now holds the contribution contract alone and routes mechanics at the developer guides.
 
 ### Change Summary
+
+The review remediation changed four guide files. `developer/README.md` now carries the contribution expectations and names decision and roadmap locations without linking out; `developer/architecture.md` names the root inventory files as identifiers; `developer/working-on-the-code.md` now includes the accepted commit types and handover obligations; and `user/troubleshooting.md` includes the private security-report route while naming `SECURITY.md` only as repository-wide policy. No source, package, root contract, or tool-surface file changed.
 
 New, under `docs/guides/`:
 
@@ -149,6 +153,13 @@ Deleted, not moved: the six `### kb_*` subsections (argument lists, enums, defau
 
 ### Verification
 
+Review remediation gates after the final edits:
+
+- `ki repo audit --skill ki-guides --repo . --concise --progress never` - PASS, with all five `GUIDE-4` findings removed.
+- `ki repo audit --skill ki-authoring --repo . --concise --progress never` - no FAIL; one pre-existing `OWN-1` warning for `.rumdl.toml` template drift.
+- `ki repo audit --repo . --concise --progress never` - no FAIL; two warnings: the same pre-existing `OWN-1` drift and expected `DIST-1` development-checkout release evidence.
+- `bunx rumdl check .` - PASS.
+
 Gates, verbatim:
 
 - `ki repo audit --skill ki-guides --concise --progress never` → `summary: KI REPO AUDIT on mcp-ki-kb-fs PASS · 1 skill`
@@ -166,6 +177,8 @@ Read-through check: every behavioural caveat listed above was located in its new
 
 ### Outstanding concerns
 
+The guide-boundary failures found during review are resolved. This remediation adds no new concern and does not close or accept the item; the four pre-existing observations below remain outside its boundary.
+
 None blocks review. Four are worth a human decision.
 
 **The README H1 is pinned by a test.** It reads `# mcp-kb-fs` while the repository, the package, and the CI badge all say `mcp-ki-kb-fs`. `repository-contract.test.ts` asserts that exact string, so correcting the heading is a code change and outside this item's boundary. It deserves its own item rather than a silent fix.
@@ -180,6 +193,8 @@ Also worth noting: no package is published under either name, and the install gu
 
 ### Post-change review
 
+The corrected dependency direction is root-inward: `README.md` and `CONTRIBUTING.md` point readers into `docs/guides/`, while a guide carries the complete procedure and mentions a root contract, catalogue, or record location only as an unlinked repository identifier. This preserves one governing authority without making a reader leave the collection to complete a task.
+
 The audience question was decided on this server's own facts rather than by copying a sibling. The case against an operator tier here is stronger than in `mcp-git-audit`, not weaker: there is no daemon, no account, no network call, and no credential, and the single operator-flavoured surface — the audit log — is one file configured in the same `env` block by the same person, so it belongs with the access-level decision that determines whether it ever records anything. An `operator/` directory would have held a copy of `choosing-an-access-level.md` and nothing else.
 
 The deletion decision held up better than expected. Writing `troubleshooting.md` from the source's verbatim error strings made the distinction concrete: what a reader needs is not the shape of `dry_run` but the knowledge that a rename refuses to overwrite and that a repeat is therefore an error. Those are behaviour; a schema cannot state them and a transcription buries them. Roughly 180 lines went, and the caveats that mattered came out at greater length than they went in.
@@ -189,6 +204,8 @@ The `ki:lint:*` defect is the argument for the whole exercise. Four script names
 What was harder than expected: keeping `CLAUDE.md` untouched. A document that links into another document's anchors is coupled to it, and moving content out of the README broke one of those links. The one-line retarget is recorded as a deviation rather than hidden.
 
 ### Mini recap
+
+The review remediation removed five out-of-collection Markdown links from four guides, made the affected procedures self-contained, retained root files as unlinked governing identifiers, and restored the `ki-guides` pass. The item remains `awaiting-review`; it has not been self-accepted.
 
 `mcp-ki-kb-fs` now has a gated, audience-split guide collection: six user guides and two developer guides under `docs/guides/`, with `[skills.ki-guides]` declared. The README's how-to material moved rather than being copied; the per-tool schema tables and the directory tree were deleted on the grounds that the server and the source already publish them. All three audits pass — the full audit at 16 skills, up from 15 — and the four code gates are green.
 

@@ -2,7 +2,7 @@
 
 For anyone changing this repository's code: how the layers fit together, which invariants every change has to preserve, and how to run the loop and its gates locally.
 
-Start with [the architecture](architecture.md) if you are new to the codebase, and [working on the code](working-on-the-code.md) when you already know where your change goes and want to get it green. [CONTRIBUTING.md](../../../CONTRIBUTING.md) holds the contribution contract itself — commit format, and what a pull request is expected to carry.
+Start with [the architecture](architecture.md) if you are new to the codebase, and [working on the code](working-on-the-code.md) when you already know where your change goes and want to get it green. Use Conventional Commits; ship tests with code changes; add an `Unreleased` changelog entry for user-visible changes; and pass coverage, smoke, and repository audits before handover. The root `CONTRIBUTING.md` retains the repository-wide contribution contract, but the procedures here are complete without it.
 
 ## Contents
 
@@ -23,4 +23,4 @@ Three things about this server are worth knowing before reading any file, becaus
 
 The user-facing side of the same system is under [user guides](../user/README.md), and it is worth reading before changing behaviour — the rejection messages documented there are a contract with people, not just strings.
 
-Why the design is as it is belongs in [decision records](../../decisions/README.md); what is planned belongs in [the roadmap](../../roadmap/).
+Why the design is as it is belongs in `docs/decisions/`; what is planned belongs in `docs/roadmap/`. Those are record locations rather than prerequisites for following these guides.
