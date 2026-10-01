@@ -3,13 +3,13 @@ id: MCP-KBFS-TOOL-004
 area: TOOL
 title: Add kb_search tool
 theme: tool-surface
-horizon: triage
+horizon: waiting-for
 status: draft
 blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-09-30T07:36:00Z
+updated_at: 2026-10-01T19:27:46Z
 ---
 
 # Add kb_search tool
@@ -26,6 +26,14 @@ Agents search a Knowledge Base through a `kb_search` tool that applies the same 
 
 In scope: a `kb_search` tool taking a base alias, query text, optional zone or path prefix, mode (`query`, `search`, `vsearch`) and result limit; calling the local qmd daemon over HTTP (`POST /query`) rather than embedding the SDK, so the roughly 2 GB of models load once for every client; filtering results to paths the caller may read; returning repository-relative path, snippet, score and docid; audit entries; a clear error when the daemon is unreachable. Excludes: index creation and refresh (`KI-TOOL-CLI-091`), the daemon's install and scheduling (chezmoi `DOTFILES-UE-063`), and any write path.
 
+## Waiting for
+
+The search tool needs the pilot evidence and authoritative trust-boundary mapping described in [the index work](../../../tools-ki/docs/roadmap/KI-TOOL-CLI-091-add-kb-search-index.md). That record is currently Waiting for because the registry has no trust-boundary field and the qmd pilot has not supplied the configuration and failure contract. A Knowledge Base alias, checkout path, or Agora membership must not be used to guess the boundary.
+
+Return this item to Next when the qmd pilot in [the harness search proposal](../../../ki-agentic-harness/docs/roadmap/KI-HARNESS-FND-028-adopt-qmd-kb-search.md) is recorded and the index owner publishes a concrete mapping and daemon request/response contract. Confirm how query/search/vsearch modes, collection restrictions, unavailable indexes, daemon errors, and source-store mirror labels are represented. [The mirror-content proposal](../../../ki-agentic-harness/docs/roadmap/KI-HARNESS-GOV-121-require-substantive-store-mirrors.md) is also still Triage; its metadata contract must be agreed before the tool can implement the promised labels.
+
+The implementation plan must prove that an untrusted daemon result cannot leak a snippet, title, docid, or other content from a different base, protected path, symlink escape, or undeclared zone. Validate scope before exposing any returned content, and keep index creation and daemon installation with their existing owners. These are external conditions, not local `blocked_by` edges.
+
 ## Discussion
 
 ### Index selection
@@ -35,3 +43,7 @@ The tool must choose the named index that matches the base's trust boundary; tak
 ### Result shaping
 
 Mark hits that are source-store mirrors so the agent can tell an extract from a pointer, following `KI-HARNESS-GOV-121`.
+
+### Readiness review
+
+The capability is adopted for follow-up, but implementation is not Ready while the shared trust-boundary and index contract remains unsettled. Planning authority does not authorise changes in the upstream repositories.

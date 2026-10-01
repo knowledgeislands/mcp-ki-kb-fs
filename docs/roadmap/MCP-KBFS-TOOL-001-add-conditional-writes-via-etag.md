@@ -9,79 +9,70 @@ blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-07-29T00:37:05Z
-updated_at: 2026-08-18T13:19:45Z
+updated_at: 2026-10-01T19:27:46Z
 ---
 
 ## Goal
 
-Achieve the stated outcome: Add conditional writes via etag for kb_write.
+Callers can detect stale Knowledge Base writes using the ETag returned by a read, while retaining an explicit destructive overwrite operation.
 
 ## Context
 
-Redesign `kb_write` around optional optimistic locking: return an `etag` from `kb_read`, accept an `if_match` write argument, and refuse stale writes.
+`kb_read` returns whole files or slices and supports binary content. `kb_write` currently atomically replaces a file through a sibling temporary file, but it never checks whether the previously read content has changed. The seven-tool wire surface and the destructive write access gate already exist.
 
 ## Boundary
 
-With `if_match`, expose a safe write surface; retain a clearly destructive force-overwrite operation without it.
+Add `etag` to reads and optional `if_match` to `kb_write`. Keep `kb_write` destructive and dry-run by default. The guarantee covers mutations through this server process; another process or unrelated editor may change a file between validation and replacement. Do not claim cross-process compare-and-swap or add preconditions to delete or rename in this item.
 
 ## Current state
 
-There is no concurrency control anywhere in the write path. `writeFile` in [src/main/files/index.ts](../../src/main/files/index.ts) writes a sibling temp file and `rename`s it over the destination, which makes each write atomic but always last-writer-wins: it never inspects the current contents or mtime of the target before replacing it.
-
-The tool named in this item's title does not exist under that name. The surface is seven tools — `kb_config`, `kb_delete`, `kb_folder_create`, `kb_list`, `kb_read`, `kb_rename`, `kb_write` — and the note-specific helpers in [src/main/notes/index.ts](../../src/main/notes/index.ts) are a library-only module (only `createFolder` is reached from a tool). The work therefore lands on `kb_read` and `kb_write`, backed by `readFile` and `writeFile` in `main/files/`.
-
-Since the layer refactor, `main/` returns plain data or throws, and [src/tools/kb/index.ts](../../src/tools/kb/index.ts) maps that to an envelope via `jsonResult` / `errorResult` from [src/utils/results.ts](../../src/utils/results.ts). Every tool declares an `outputSchema` taken from the same zod schema that types the `main/` return value, and those schemas are `.strict()`. Adding an `etag` to a read result is therefore a declared output-contract change to `readFileResultSchema`, not an additive field that clients can ignore; `if_match` is likewise a change to the `kb_write` `inputSchema`.
-
-Two read-shape facts constrain the design. `kb_read` can return a slice (`part: 'all' | 'frontmatter' | 'body'`) and can return base64 for non-UTF-8 content, so an etag has to be defined over the whole file on disk rather than over the returned `content`. `readFile` already stats the file and reports `size`, so the metadata needed for a validator is in hand.
-
-`kb_write` is annotated `DESTRUCTIVE` and defaults `dry_run: true`. A conditional write does not change either fact — `if_match` narrows when the overwrite is allowed, it does not make the tool non-destructive — so the annotation preset and access-level gating stay as they are.
+[src/main/files/index.ts](../../src/main/files/index.ts) owns read, write, rename, and delete operations and the strict result schemas. `readFile` already obtains the complete byte buffer before slicing or base64 encoding. `writeFile` performs its dry-run before writing and has no mutation serialisation. The read/write MCP boundary is [src/tools/kb/index.ts](../../src/tools/kb/index.ts).
 
 ## Steps
 
-- [ ] Decide and document the etag derivation (content hash versus stat-based validator), and make it total over both UTF-8 and binary files and independent of the `part` slice returned.
-- [ ] Add the `etag` field to `readFileResultSchema` with a describe string, and populate it in `readFile` from the bytes already read.
-- [ ] Add an optional `if_match` argument to the `kb_write` `inputSchema` and to `writeFile`, re-reading the target inside the write path and refusing on mismatch with a distinguishable error; keep the no-`if_match` path as today's force overwrite.
-- [ ] Define the `dry_run` semantics for a conditional write — a preview must report whether the precondition currently holds without mutating — and extend `writeFileResultSchema` if that needs a field.
-- [ ] Extend the tool descriptions in `src/tools/kb/index.ts` and the README tool table and `kb_read` / `kb_write` sections so the optimistic-locking contract is discoverable.
-- [ ] Add contract tests for match, mismatch, missing-target, binary, and slice-read cases, and confirm the smoke test still sees the unchanged seven-tool surface.
+- [ ] Derive an opaque ETag as `sha256:` plus the lowercase SHA-256 digest of the complete byte buffer. Every slice of identical bytes returns the same validator; binary and same-size edits are covered.
+- [ ] Add the validator to `readFileResultSchema`, `readFile`, and the declared tool result. Add an optional strictly validated `if_match` argument to the write library and tool schema; accept exactly the emitted validator shape, without HTTP wildcard semantics.
+- [ ] Serialise the file mutation entry points used by this server through one process-wide asynchronous queue, including unconditional writes, deletes, and renames. Perform conditional validation and replacement within that queue, release the queue on errors, and do not hold a lock while waiting for user input. A process-wide queue is an intentionally simple initial choice; do not introduce a cross-process lock protocol.
+- [ ] For a conditional write, reject a missing target or mismatching hash before mkdir, temporary-file creation, or any other mutation. Use a distinguishable precondition failure through the existing error envelope. Dry-run performs the same check and returns the existing preview result only when it presently holds; previews reserve no future write.
+- [ ] Preserve existing unconditional creation/overwrite, atomic replacement, containment, protected-path checks, and access annotations. Add tests for stale/matching/missing targets, all read slices, binary content, failure cleanup, and concurrent server mutations.
+- [ ] Document the validator, conditional preview, force-overwrite path, and the unrelated-editor race limitation in the tool descriptions and user guidance.
 
 ## Files touched
 
-- [src/main/files/index.ts](../../src/main/files/index.ts) — `readFileResultSchema`, `readFile`, `writeFile`, and any new etag helper
-- [src/main/files/index.test.ts](../../src/main/files/index.test.ts) and [src/main/files/repository-contract.test.ts](../../src/main/files/repository-contract.test.ts) — conditional-write and etag contracts
-- [src/tools/kb/index.ts](../../src/tools/kb/index.ts) — `kb_read` / `kb_write` schemas and descriptions
-- [src/tools/kb/index.test.ts](../../src/tools/kb/index.test.ts) — registration assertions covering the changed input and output schemas
-- [README.md](../../README.md) — tool table and the `kb_read` / `kb_write` sections
+- [src/main/files/index.ts](../../src/main/files/index.ts) and its co-located tests: validators, serialised mutations, precondition checks, and result contract.
+- [src/tools/kb/index.ts](../../src/tools/kb/index.ts) and its co-located registration tests: argument and result schemas, descriptions, and unchanged annotation checks.
+- A small helper under `src/main/files/` only if needed to isolate the mutation queue or digest logic, with co-located tests.
+- [README.md](../../README.md) and the existing filesystem user guide that owns read/write procedures: concurrency contract and examples.
 
 ## Verify
 
-1. `bun run test`
-2. `bun run test:coverage` — coverage thresholds are 100% on lines, functions, branches, and statements, so every new mismatch and error branch needs a test; `main/files/` is not on the coverage exclude list.
-3. `bun run ki:test:smoke` — the tool surface must remain the same seven tools.
-4. `ki repo audit --repo .`
-5. A conditional write with a stale `if_match` fails without modifying the file on disk, and a read followed by a write with the returned `etag` succeeds.
+1. Run `bunx tsc --noEmit`, `bun run test`, `bun run test:coverage`, `bun run build`, and `bun run ki:test:smoke` sequentially. Preserve the 100% coverage thresholds and seven-tool modern/legacy wire surface.
+2. Two concurrent writes with one original ETag have exactly one winner through the same server process; the loser reports a precondition failure. Unconditional writes, renames, and deletes cannot interleave the conditional validation and replacement in that process.
+3. A stale or missing-target precondition changes no files or directories. Dry-run changes no bytes, creates no temporary files, and does not reserve a future result. A failed operation does not strand the mutation queue.
+4. Slice and binary reads derive the same validator from the same whole-file bytes; same-size byte changes alter it. Existing cross-base and symlink rejection tests remain green.
+5. Run focused `ki-repo-mcp`, `ki-engineering`, and `ki-work-roadmap` audits, recording unrelated fleet findings separately.
 
 ## Dependencies / blocks
 
-This item is neither blocked by nor blocking another work item; `blocks` and `blocked_by` are empty. Its real dependency is internal: the output-schema contract established by the layer refactor, which makes any new result field a deliberate change to a declared `outputSchema` rather than an additive one.
+No build dependency. Publication as Ready is conditional on the owner's explicit acceptance of the server-process guarantee and the residual unrelated-editor race. Absent that decision, keep this record Next / draft.
 
 ## Documentation impact
 
 ### Decision Records
 
-None.
+Record the accepted concurrency guarantee and why ordinary filesystem replacement cannot promise atomic comparison against unrelated writers in a repository decision record when implementing.
 
 ### Specifications
 
-None.
+Tool input/output schemas and their contract tests gain the ETag and precondition semantics; there is no standalone specification area to create speculatively.
 
 ### Guides
 
-Document conditional-write and ETag behaviour in the README.
+Update the existing user documentation and tool descriptions with the guarantee and its limit.
 
 ### Roadmap
 
-No additional roadmap impact.
+Do not fold delete/rename preconditions or a cross-process coordination service into this item.
 
 ## Discussion
 
@@ -96,3 +87,7 @@ The existing temp-file-plus-`rename` write is atomic in the sense that no reader
 ### Scope of the etag
 
 Only `kb_write` is in scope for `if_match`. Whether `kb_delete` and `kb_rename` should eventually accept the same precondition is worth noting but is deliberately not decided here.
+
+### Readiness review
+
+SHA-256 and process-wide mutation serialisation are the proposed bounded design. The earlier open concurrency question remains an owner decision until the limited guarantee is explicitly accepted; this plan must not be marked Ready merely because the implementation steps are concrete.
