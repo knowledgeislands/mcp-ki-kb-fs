@@ -28,7 +28,7 @@ Seven tools, gated by `MCP_KI_KB_FS_ACCESS_LEVEL`. The levels nest, and each too
 | `kb_write`         | `destructive` | Write or overwrite text or binary content. ¶         |
 | `kb_delete`        | `destructive` | Delete a file. Previews by default. ‖                |
 
-† The KB root and the root-file allow-list are never listable. ‡ Zone and staging paths are readable, as are exact `root_file_allowlist` entries — which are never writable or listable. § Non-idempotent: a second identical call fails, because the source has already moved. ¶ Accepts UTF-8 or base64, creates parent directories by default, and previews by default. ‖ Allow-list entries are never deletable.
+† The KB root and the root-file allow-list are never listable. ‡ Zone and staging paths are readable, as are exact `root_file_allowlist` entries — which are never writable or listable. § Non-idempotent: a second identical call fails, because the source has already moved. ¶ Accepts UTF-8 or base64, creates parent directories by default, and previews by default. Pass `if_match` with the `etag` from `kb_read` to refuse a stale overwrite; the check is serialised within this server process only. ‖ Allow-list entries are never deletable.
 
 Each tool's arguments, defaults, enums, and descriptions are published by the running server from the schemas it validates against, and rendered by your MCP client. This repository keeps no second, hand-maintained copy of them — a transcribed schema drifts from the code that serves it. What is written down instead is behaviour a schema cannot state, and that lives in the guides.
 

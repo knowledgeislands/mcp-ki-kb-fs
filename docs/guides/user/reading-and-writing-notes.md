@@ -24,7 +24,7 @@ The directory you name has to be a zone or staging root, or something beneath on
 
 > "Show me `Pillars/Finance/Budget.md`."
 
-You get the path, its MIME type, its encoding, its size on disk, and its content. Text comes back as UTF-8 and binary comes back as base64, decided by whether the bytes actually decode rather than by the extension — so a `.md` file containing something other than text is handled honestly instead of being mangled.
+You get the path, its MIME type, its encoding, its size on disk, its content, and an `etag` — a `sha256:` fingerprint of the whole file's bytes. Text comes back as UTF-8 and binary comes back as base64, decided by whether the bytes actually decode rather than by the extension — so a `.md` file containing something other than text is handled honestly instead of being mangled.
 
 For a Markdown file you can ask for a slice instead of the whole thing:
 
@@ -47,6 +47,16 @@ Nothing is written by default. Writes preview unless the call explicitly asks fo
 When the write does happen it is atomic — content goes to a sibling temporary file and is renamed into place — so an interrupted write leaves either the old file or the new one, never a half-written note.
 
 Binary content works the same way with base64 encoding, which is how images and attachments get into a base alongside the notes that reference them.
+
+## Edit without overwriting someone else's change
+
+> "Update `Pillars/Finance/Budget.md`, but only if it hasn't changed since you read it."
+
+Every read returns an `etag` for the whole file, and it is the same whichever part you asked for — frontmatter, body, or the lot. Pass that value back as `if_match` on the write, and the server compares it with the file's current bytes before touching anything. If the file has changed, or no longer exists, the write fails with an error beginning `Precondition failed` and nothing is written: no temporary file, no new folder. Read the file again, reconcile, and retry with the fresh `etag`.
+
+A preview applies the same check, so a dry run tells you whether the conditional write would currently succeed — but it reserves nothing, and the real write checks again. Leave `if_match` out when you genuinely mean to create or overwrite regardless; that remains the explicit force-overwrite path.
+
+The guarantee has a deliberate limit. Writes, renames, and deletes made through this server process are serialised, so two callers of the same server cannot both succeed with one stale `etag`. Another program — a separate server process, an editor, a sync client — can still change the file in the instant between the check and the replacement, because an ordinary filesystem rename cannot compare and swap.
 
 ## Make a folder ahead of time
 

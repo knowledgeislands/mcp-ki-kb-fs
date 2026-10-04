@@ -278,3 +278,37 @@ describe('kb_config across bases', () => {
     expect(result.content[0]?.text).not.toContain(BETA_ROOT)
   })
 })
+
+describe('kb_read etag and kb_write if_match', () => {
+  it('accepts only the emitted etag shape for if_match', () => {
+    const tool = byName('kb_write')
+    const valid = { kb: 'alpha', path: `${ZONE}/Note.md`, content: 'x' }
+    expect(tool.config.inputSchema?.safeParse({ ...valid, if_match: `sha256:${'a'.repeat(64)}` }).success).toBe(true)
+    expect(tool.config.inputSchema?.safeParse({ ...valid, if_match: '*' }).success).toBe(false)
+  })
+
+  it('round-trips the read etag into a conditional write and reports a stale one as a precondition failure', async () => {
+    const notePath = `${ZONE}/Conditional.md`
+    await fs.writeFile(path.join(ALPHA_ROOT, notePath), 'first', 'utf-8')
+    const read = await byName('kb_read').handler({ kb: 'alpha', path: notePath, part: 'all' })
+    const { etag } = read.structuredContent as { etag: string }
+    expect(etag).toMatch(/^sha256:[0-9a-f]{64}$/)
+
+    const write = (content: string) =>
+      byName('kb_write').handler({
+        kb: 'alpha',
+        path: notePath,
+        content,
+        encoding: 'utf-8',
+        create_dirs: false,
+        dry_run: false,
+        if_match: etag
+      })
+    expect((await write('second')).isError).toBeUndefined()
+
+    const stale = await write('third')
+    expect(stale.isError).toBe(true)
+    expect(stale.content[0]?.text).toMatch(/^Error writing file: Precondition failed/)
+    await expect(fs.readFile(path.join(ALPHA_ROOT, notePath), 'utf-8')).resolves.toBe('second')
+  })
+})

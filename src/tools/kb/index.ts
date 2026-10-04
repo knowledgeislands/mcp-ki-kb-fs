@@ -109,9 +109,11 @@ root-file allow-list are never listable.`,
     'kb_read',
     {
       title: 'Read KB Content',
-      description: `Read one KB file and return its path, MIME type, encoding, size, and content.
+      description: `Read one KB file and return its path, MIME type, encoding, size, content, and etag.
 
-UTF-8 files return text; binary files return base64. For a Markdown file, part
+UTF-8 files return text; binary files return base64. etag validates the whole
+file whichever part is returned; pass it to kb_write if_match to refuse a stale
+overwrite. For a Markdown file, part
 may select all content, YAML frontmatter, or body. Paths must be in a declared
 zone or staging root, except exact read-only entries in root_file_allowlist.
 The exception neither lists the root nor permits writes.`,
@@ -172,7 +174,14 @@ The exception neither lists the root nor permits writes.`,
       description: `Create or overwrite a file in a declared KB zone or staging root.
 
 Use UTF-8 content for text and base64 for binary data. Writes are atomic; dry_run
-defaults to true. Root-file allow-list entries are never writable.`,
+defaults to true. Root-file allow-list entries are never writable.
+
+Pass if_match with the etag from kb_read to write only if the file is unchanged:
+a changed or missing file fails with "Precondition failed" and nothing is
+written. Dry-run applies the same check but reserves nothing. Omit if_match to
+create or overwrite unconditionally. The check covers writes, renames, and
+deletes made through this server process only; another program can still change
+the file between the check and the replacement.`,
       inputSchema: z
         .object({
           kb: kbArg(cfg),
@@ -183,7 +192,10 @@ defaults to true. Root-file allow-list entries are never writable.`,
             .describe('UTF-8 text or base64-encoded bytes, according to encoding.'),
           encoding: z.enum(['utf-8', 'base64']).default('utf-8').describe('Content encoding. Default utf-8.'),
           create_dirs: z.boolean().default(true).describe('Create missing parent directories. Default true.'),
-          dry_run: z.boolean().default(true).describe('Preview without writing. Default true.')
+          dry_run: z.boolean().default(true).describe('Preview without writing. Default true.'),
+          if_match: files.etagSchema
+            .optional()
+            .describe('Write only if the current file still has this etag from kb_read. Omit to overwrite.')
         })
         .strict(),
       outputSchema: files.writeFileResultSchema,

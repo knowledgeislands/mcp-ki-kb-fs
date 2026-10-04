@@ -3,6 +3,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { KnowledgeBase } from '../../config/index.js'
+import { computeEtag } from './etag.js'
 import {
   deleteFile,
   deleteFileResultSchema,
@@ -555,5 +556,158 @@ describe('result schemas', () => {
 
     const deleted = await deleteFile(base, { path: `${ZONE}/schema-renamed.txt`, dry_run: false })
     expect(deleteFileResultSchema.parse(deleted)).toEqual(deleted)
+  })
+})
+
+describe('readFile — etag', () => {
+  const markdown = '---\ntitle: T\n---\nBody text\n'
+
+  it('reports the same whole-file validator for every Markdown part', async () => {
+    await fs.writeFile(zp('Etag.md'), markdown, 'utf-8')
+    const expected = computeEtag(Buffer.from(markdown, 'utf-8'))
+    for (const part of ['all', 'frontmatter', 'body'] as const) {
+      const result = await readFile(base, { path: `${ZONE}/Etag.md`, part })
+      expect(result.etag).toBe(expected)
+    }
+  })
+
+  it('derives the validator from binary bytes', async () => {
+    const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0xff, 0x00, 0xfe])
+    await fs.writeFile(zp('image.png'), bytes)
+    const result = await readFile(base, { path: `${ZONE}/image.png` })
+    expect(result.encoding).toBe('base64')
+    expect(result.etag).toBe(computeEtag(bytes))
+  })
+
+  it('changes the validator on a same-size edit', async () => {
+    await fs.writeFile(zp('same.txt'), 'aaaa', 'utf-8')
+    const before = await readFile(base, { path: `${ZONE}/same.txt` })
+    await fs.writeFile(zp('same.txt'), 'aaab', 'utf-8')
+    const after = await readFile(base, { path: `${ZONE}/same.txt` })
+    expect(after.size).toBe(before.size)
+    expect(after.etag).not.toBe(before.etag)
+  })
+})
+
+describe('writeFile — if_match', () => {
+  const write = (content: string, extra: { if_match?: string; dry_run?: boolean; create_dirs?: boolean } = {}) =>
+    writeFile(base, {
+      path: `${ZONE}/cond.md`,
+      content,
+      create_dirs: extra.create_dirs ?? false,
+      dry_run: extra.dry_run ?? false,
+      ...(extra.if_match === undefined ? {} : { if_match: extra.if_match })
+    })
+
+  const tmpFiles = async (dir: string) => (await fs.readdir(dir)).filter((name) => name.endsWith('.tmp'))
+
+  it('writes when the validator matches the current bytes', async () => {
+    await fs.writeFile(zp('cond.md'), 'original', 'utf-8')
+    const { etag } = await readFile(base, { path: `${ZONE}/cond.md` })
+    const result = await write('updated', { if_match: etag })
+    expect(result.dry_run).toBe(false)
+    await expect(fs.readFile(zp('cond.md'), 'utf-8')).resolves.toBe('updated')
+  })
+
+  it('rejects a stale validator without changing the file', async () => {
+    await fs.writeFile(zp('cond.md'), 'original', 'utf-8')
+    const { etag } = await readFile(base, { path: `${ZONE}/cond.md` })
+    await fs.writeFile(zp('cond.md'), 'someone else', 'utf-8')
+    await expect(write('mine', { if_match: etag })).rejects.toThrow(/^Precondition failed: .*has changed/)
+    await expect(fs.readFile(zp('cond.md'), 'utf-8')).resolves.toBe('someone else')
+    expect(await tmpFiles(zp())).toEqual([])
+  })
+
+  it('rejects a missing target without creating directories or files', async () => {
+    const etag = computeEtag(Buffer.from('anything'))
+    await expect(
+      writeFile(base, {
+        path: `${ZONE}/new-dir/cond.md`,
+        content: 'x',
+        create_dirs: true,
+        dry_run: false,
+        if_match: etag
+      })
+    ).rejects.toThrow(/^Precondition failed: .*does not exist/)
+    await expect(fs.access(zp('new-dir'))).rejects.toThrow()
+  })
+
+  it('rejects a directory target as a failed precondition', async () => {
+    await fs.mkdir(zp('cond.md'))
+    await expect(write('x', { if_match: computeEtag(Buffer.from('')) })).rejects.toThrow(/^Precondition failed/)
+  })
+
+  it('propagates an unexpected read error during the check', async () => {
+    await fs.writeFile(zp('cond.md'), 'original', 'utf-8')
+    const { etag } = await readFile(base, { path: `${ZONE}/cond.md` })
+    await fs.chmod(zp('cond.md'), 0o000)
+    try {
+      await expect(write('x', { if_match: etag })).rejects.toThrow(/EACCES/)
+    } finally {
+      await fs.chmod(zp('cond.md'), 0o644)
+    }
+  })
+
+  it('applies the same check on dry-run and changes nothing', async () => {
+    await fs.writeFile(zp('cond.md'), 'original', 'utf-8')
+    const { etag } = await readFile(base, { path: `${ZONE}/cond.md` })
+    const preview = await write('updated', { if_match: etag, dry_run: true })
+    expect(preview.dry_run).toBe(true)
+    expect(preview.action).toMatch(/would overwrite/)
+    await fs.writeFile(zp('cond.md'), 'changed', 'utf-8')
+    await expect(write('updated', { if_match: etag, dry_run: true })).rejects.toThrow(/^Precondition failed/)
+    await expect(fs.readFile(zp('cond.md'), 'utf-8')).resolves.toBe('changed')
+    expect(await tmpFiles(zp())).toEqual([])
+  })
+
+  it('lets exactly one of two concurrent writes with the same validator win', async () => {
+    await fs.writeFile(zp('cond.md'), 'original', 'utf-8')
+    const { etag } = await readFile(base, { path: `${ZONE}/cond.md` })
+    const outcomes = await Promise.allSettled([write('first', { if_match: etag }), write('second', { if_match: etag })])
+    expect(outcomes.map((o) => o.status)).toEqual(['fulfilled', 'rejected'])
+    const loser = outcomes[1] as PromiseRejectedResult
+    expect(String(loser.reason)).toMatch(/Precondition failed/)
+    await expect(fs.readFile(zp('cond.md'), 'utf-8')).resolves.toBe('first')
+  })
+
+  it('does not let an unconditional write, rename or delete interleave a conditional write', async () => {
+    await fs.writeFile(zp('cond.md'), 'original', 'utf-8')
+    const { etag } = await readFile(base, { path: `${ZONE}/cond.md` })
+    const conditional = write('conditional', { if_match: etag })
+    const unconditional = write('unconditional')
+    await Promise.all([conditional, unconditional])
+    await expect(fs.readFile(zp('cond.md'), 'utf-8')).resolves.toBe('unconditional')
+
+    const { etag: current } = await readFile(base, { path: `${ZONE}/cond.md` })
+    const renamed = renameFile(base, { from: `${ZONE}/cond.md`, to: `${ZONE}/moved.md`, create_dirs: false })
+    const afterRename = write('late', { if_match: current })
+    await renamed
+    await expect(afterRename).rejects.toThrow(/^Precondition failed: .*does not exist/)
+
+    const { etag: moved } = await readFile(base, { path: `${ZONE}/moved.md` })
+    const deleted = deleteFile(base, { path: `${ZONE}/moved.md`, dry_run: false })
+    const afterDelete = writeFile(base, {
+      path: `${ZONE}/moved.md`,
+      content: 'late',
+      create_dirs: false,
+      dry_run: false,
+      if_match: moved
+    })
+    await deleted
+    await expect(afterDelete).rejects.toThrow(/^Precondition failed/)
+    await expect(fs.access(zp('moved.md'))).rejects.toThrow()
+  })
+
+  it('keeps unconditional creation and overwrite unchanged', async () => {
+    await write('created')
+    await write('overwritten')
+    await expect(fs.readFile(zp('cond.md'), 'utf-8')).resolves.toBe('overwritten')
+  })
+
+  it('does not strand the queue after a failed mutation', async () => {
+    await expect(
+      writeFile(base, { path: `${ZONE}/missing-dir/x.md`, content: 'x', create_dirs: false, dry_run: false })
+    ).rejects.toThrow(/Directory not found/)
+    await expect(write('after failure')).resolves.toMatchObject({ dry_run: false })
   })
 })

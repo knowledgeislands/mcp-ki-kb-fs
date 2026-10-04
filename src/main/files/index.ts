@@ -22,6 +22,10 @@ import { isProtectedPath } from '../../utils/protected.js'
 import { assertRealPathWithinRoot, isNodeError, resolveWithinRoot } from '../../utils/utils.js'
 import { isInScope, outOfScopeError } from '../../utils/zones.js'
 import { collectFiles, collectFolders, collectNotes, relativeFromRoot } from '../shared.js'
+import { computeEtag, PreconditionFailedError } from './etag.js'
+import { serialiseMutation } from './mutation-queue.js'
+
+export { etagSchema } from './etag.js'
 
 // Minimal extension → MIME map for the most common KB side-file types.
 // Falls back to application/octet-stream for anything unrecognised.
@@ -80,7 +84,12 @@ export const readFileResultSchema = z
       .string()
       .describe('MIME type derived from the file extension; application/octet-stream when unrecognised.'),
     content: z.string().describe('File content in the stated encoding.'),
-    size: z.number().describe('Size of the whole file on disk, in bytes.')
+    size: z.number().describe('Size of the whole file on disk, in bytes.'),
+    etag: z
+      .string()
+      .describe(
+        'Opaque validator for the whole file: "sha256:" plus the SHA-256 digest of every byte, whichever part was returned. Pass it to kb_write if_match.'
+      )
   })
   .strict()
 
@@ -176,6 +185,7 @@ export const readFile = async (
     }
     const buf = await fs.readFile(absPath)
     const mimeType = mimeTypeFor(filePath)
+    const etag = computeEtag(buf)
     if (isUtf8(buf)) {
       const content = buf.toString('utf-8')
       if (part !== 'all') {
@@ -192,15 +202,24 @@ export const readFile = async (
           encoding: 'utf-8',
           mimeType,
           content: part === 'frontmatter' ? (split.frontmatter ?? '(no frontmatter)') : split.body,
-          size: stat.size
+          size: buf.byteLength,
+          etag
         }
       }
-      return { path: filePath, part, encoding: 'utf-8', mimeType, content, size: stat.size }
+      return { path: filePath, part, encoding: 'utf-8', mimeType, content, size: buf.byteLength, etag }
     }
     if (part !== 'all') {
       throw new Error(`part is only available for UTF-8 Markdown files: "${filePath}"`)
     }
-    return { path: filePath, part, encoding: 'base64', mimeType, content: buf.toString('base64'), size: stat.size }
+    return {
+      path: filePath,
+      part,
+      encoding: 'base64',
+      mimeType,
+      content: buf.toString('base64'),
+      size: buf.byteLength,
+      etag
+    }
   } catch (err) {
     if (isNodeError(err) && err.code === 'ENOENT') {
       throw new Error(`File not found: "${filePath}"`)
@@ -259,20 +278,58 @@ export const listFiles = async (
 
 export type FileEncoding = 'utf-8' | 'base64'
 
-export const writeFile = async (
+/**
+ * Compare the target's current whole-file bytes with a caller's `if_match`
+ * validator. A missing target, a non-file, or a mismatch fails the
+ * precondition. Called inside the mutation queue before any mkdir, temporary
+ * file, or replacement, so a failed precondition changes nothing.
+ */
+const assertIfMatch = async (absPath: string, filePath: string, ifMatch: string): Promise<void> => {
+  let current: Buffer
+  try {
+    current = await fs.readFile(absPath)
+  } catch (err) {
+    if (isNodeError(err) && (err.code === 'ENOENT' || err.code === 'EISDIR' || err.code === 'ENOTDIR')) {
+      throw new PreconditionFailedError(`"${filePath}" does not exist as a file, so if_match cannot match.`)
+    }
+    throw err
+  }
+  const currentEtag = computeEtag(current)
+  if (currentEtag !== ifMatch) {
+    throw new PreconditionFailedError(
+      `"${filePath}" has changed since it was read (if_match ${ifMatch}, current ${currentEtag}). Read it again and retry.`
+    )
+  }
+}
+
+export const writeFile = (
+  base: KnowledgeBase,
+  args: {
+    path: string
+    content: string
+    encoding?: FileEncoding
+    create_dirs: boolean
+    dry_run: boolean
+    if_match?: string
+  }
+): Promise<WriteFileResult> => serialiseMutation(() => writeFileNow(base, args))
+
+const writeFileNow = async (
   base: KnowledgeBase,
   {
     path: filePath,
     content,
     encoding = 'utf-8',
     create_dirs,
-    dry_run
+    dry_run,
+    if_match
   }: {
     path: string
     content: string
     encoding?: FileEncoding
     create_dirs: boolean
     dry_run: boolean
+    if_match?: string
   }
 ): Promise<WriteFileResult> => {
   try {
@@ -287,6 +344,9 @@ export const writeFile = async (
     await assertRealPathWithinRoot(base.rootPath, absPath)
     const buf = encoding === 'base64' ? Buffer.from(content, 'base64') : Buffer.from(content, 'utf-8')
     const bytes = buf.byteLength
+    if (if_match !== undefined) {
+      await assertIfMatch(absPath, filePath, if_match)
+    }
     if (dry_run) {
       let exists = false
       let existingBytes = 0
@@ -316,7 +376,12 @@ export const writeFile = async (
   }
 }
 
-export const renameFile = async (
+export const renameFile = (
+  base: KnowledgeBase,
+  args: { from: string; to: string; create_dirs: boolean }
+): Promise<RenameFileResult> => serialiseMutation(() => renameFileNow(base, args))
+
+const renameFileNow = async (
   base: KnowledgeBase,
   { from, to, create_dirs }: { from: string; to: string; create_dirs: boolean }
 ): Promise<RenameFileResult> => {
@@ -369,7 +434,10 @@ export const renameFile = async (
   }
 }
 
-export const deleteFile = async (
+export const deleteFile = (base: KnowledgeBase, args: { path: string; dry_run: boolean }): Promise<DeleteFileResult> =>
+  serialiseMutation(() => deleteFileNow(base, args))
+
+const deleteFileNow = async (
   base: KnowledgeBase,
   { path: filePath, dry_run }: { path: string; dry_run: boolean }
 ): Promise<DeleteFileResult> => {

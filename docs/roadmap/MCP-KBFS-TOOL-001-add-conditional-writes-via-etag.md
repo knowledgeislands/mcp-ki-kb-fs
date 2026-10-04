@@ -4,12 +4,12 @@ area: TOOL
 title: Add ETag writes
 theme: tool-surface
 horizon: next
-status: ready
+status: awaiting-review
 blocks: []
 blocked_by: []
-baseline_ref: null
+baseline_ref: c15c32d0e27b09a27249ca4a00b460ff02f50627
 created_at: 2026-07-29T00:37:05Z
-updated_at: 2026-10-04T11:48:57Z
+updated_at: 2026-10-04T11:53:55Z
 ---
 
 ## Goal
@@ -30,12 +30,12 @@ Add `etag` to reads and optional `if_match` to `kb_write`. Keep `kb_write` destr
 
 ## Steps
 
-- [ ] Derive an opaque ETag as `sha256:` plus the lowercase SHA-256 digest of the complete byte buffer. Every slice of identical bytes returns the same validator; binary and same-size edits are covered.
-- [ ] Add the validator to `readFileResultSchema`, `readFile`, and the declared tool result. Add an optional strictly validated `if_match` argument to the write library and tool schema; accept exactly the emitted validator shape, without HTTP wildcard semantics.
-- [ ] Serialise the file mutation entry points used by this server through one process-wide asynchronous queue, including unconditional writes, deletes, and renames. Perform conditional validation and replacement within that queue, release the queue on errors, and do not hold a lock while waiting for user input. A process-wide queue is an intentionally simple initial choice; do not introduce a cross-process lock protocol.
-- [ ] For a conditional write, reject a missing target or mismatching hash before mkdir, temporary-file creation, or any other mutation. Use a distinguishable precondition failure through the existing error envelope. Dry-run performs the same check and returns the existing preview result only when it presently holds; previews reserve no future write.
-- [ ] Preserve existing unconditional creation/overwrite, atomic replacement, containment, protected-path checks, and access annotations. Add tests for stale/matching/missing targets, all read slices, binary content, failure cleanup, and concurrent server mutations.
-- [ ] Document the validator, conditional preview, force-overwrite path, and the unrelated-editor race limitation in the tool descriptions and user guidance.
+- [x] Derive an opaque ETag as `sha256:` plus the lowercase SHA-256 digest of the complete byte buffer. Every slice of identical bytes returns the same validator; binary and same-size edits are covered.
+- [x] Add the validator to `readFileResultSchema`, `readFile`, and the declared tool result. Add an optional strictly validated `if_match` argument to the write library and tool schema; accept exactly the emitted validator shape, without HTTP wildcard semantics.
+- [x] Serialise the file mutation entry points used by this server through one process-wide asynchronous queue, including unconditional writes, deletes, and renames. Perform conditional validation and replacement within that queue, release the queue on errors, and do not hold a lock while waiting for user input. A process-wide queue is an intentionally simple initial choice; do not introduce a cross-process lock protocol.
+- [x] For a conditional write, reject a missing target or mismatching hash before mkdir, temporary-file creation, or any other mutation. Use a distinguishable precondition failure through the existing error envelope. Dry-run performs the same check and returns the existing preview result only when it presently holds; previews reserve no future write.
+- [x] Preserve existing unconditional creation/overwrite, atomic replacement, containment, protected-path checks, and access annotations. Add tests for stale/matching/missing targets, all read slices, binary content, failure cleanup, and concurrent server mutations.
+- [x] Document the validator, conditional preview, force-overwrite path, and the unrelated-editor race limitation in the tool descriptions and user guidance.
 
 ## Files touched
 
@@ -74,6 +74,43 @@ Update the existing user documentation and tool descriptions with the guarantee 
 ### Roadmap
 
 Do not fold delete/rename preconditions or a cross-process coordination service into this item.
+
+## Review
+
+### Delivered
+
+Approved boundary: whole-file SHA-256 `etag` on `kb_read`, optional strict `if_match` on `kb_write`, one process-wide mutation queue for server-exposed writes, renames, and deletes, precondition checks before any mutation, dry-run parity, and documentation of the process-local guarantee. Excluded as planned: preconditions on `kb_delete` and `kb_rename`, cross-process coordination, and regeneration of the already-stale mcporter client under `src/generated/`. Baseline `c15c32d0e27b09a27249ca4a00b460ff02f50627`; delivery is the commit that sets this record to `awaiting-review`.
+
+### Change Summary
+
+- `src/main/files/etag.ts` (new): `computeEtag`, strict `etagSchema` (`sha256:` plus 64 lowercase hex digits, no wildcard or quoted forms), and `PreconditionFailedError` whose message starts `Precondition failed:`.
+- `src/main/files/mutation-queue.ts` (new): `serialiseMutation`, a FIFO promise chain that survives failures.
+- `src/main/files/index.ts`: `readFileResultSchema` gains `etag`; `readFile` hashes the full buffer it already loads and reports `size` from that buffer; `writeFile`, `renameFile`, and `deleteFile` run through the queue; `writeFile` accepts `if_match` and validates it before dry-run preview, `mkdir`, or the temporary file. Missing, directory, or mismatching targets fail the precondition; other read errors propagate.
+- `src/tools/kb/index.ts`: `kb_write` input gains optional `if_match`; `kb_read` and `kb_write` descriptions state the validator, preview, force-overwrite path, and process-local limit. Annotations unchanged (`kb_write` stays `DESTRUCTIVE`, dry-run default true).
+- Tests: `etag.test.ts`, `mutation-queue.test.ts`, new `readFile — etag` and `writeFile — if_match` suites, and tool-boundary round-trip and schema tests.
+- Docs: `docs/decisions/ADR-MCP-KBFS-001-process-local-conditional-writes.md` and index entry; README footnote; user guide section "Edit without overwriting someone else's change".
+
+### Verification
+
+- `bunx tsc --noEmit`: pass.
+- `bun run test`: 14 files, 316 tests pass.
+- `bun run test:coverage`: 100% statements, branches, functions, and lines.
+- `bun run build`: pass. `bun run ki:test:smoke`: pass (modern and legacy discovery, seven tools, `kb` required).
+- `bunx biome check .`: clean. `bunx knip`: no findings beyond pre-existing configuration hints. `bunx rumdl check docs README.md`: clean.
+- `ki repo audit --repo .`: PASS across 20 skills.
+- Behavioural evidence: concurrent writes with one validator yield exactly one winner; stale and missing-target preconditions leave bytes, directories, and temporary files unchanged; dry-run checks without writing; a failed mutation does not strand the queue; all read parts and binary reads share one validator; same-size edits change it.
+
+### Outstanding concerns
+
+None blocking. The interleaving test for unconditional write, rename, and delete exercises ordering through the public functions; strict serialisation itself is proven by the queue unit test. The generated mcporter client remains stale (predates the required `kb` argument) and is outside this item.
+
+### Post-change review
+
+The goal is met within the approved boundary: callers can detect stale writes and still overwrite explicitly. No tool was added or removed, access tiers and annotations are unchanged, and containment and protected-path checks run before the precondition. Regression risk is low: unconditional behaviour is preserved and covered, and mutation throughput within one process is now serial by design. Ready for acceptance review.
+
+### Mini recap
+
+Delivered ETag-validated conditional writes with a process-local serialisation guarantee, verified at the library and MCP boundaries with full gates green. Learning route: if delete or rename preconditions are wanted, capture a new item through `ki-next` rather than extending this one.
 
 ## Discussion
 
