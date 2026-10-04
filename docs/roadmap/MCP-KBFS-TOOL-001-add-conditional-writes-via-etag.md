@@ -4,12 +4,12 @@ area: TOOL
 title: Add ETag writes
 theme: tool-surface
 horizon: next
-status: awaiting-review
+status: done
 blocks: []
 blocked_by: []
 baseline_ref: c15c32d0e27b09a27249ca4a00b460ff02f50627
 created_at: 2026-07-29T00:37:05Z
-updated_at: 2026-10-04T11:53:55Z
+updated_at: 2026-10-04T12:11:13Z
 ---
 
 ## Goal
@@ -111,6 +111,10 @@ The goal is met within the approved boundary: callers can detect stale writes an
 ### Mini recap
 
 Delivered ETag-validated conditional writes with a process-local serialisation guarantee, verified at the library and MCP boundaries with full gates green. Learning route: if delete or rename preconditions are wanted, capture a new item through `ki-next` rather than extending this one.
+
+## Done
+
+Accepted 2026-10-04 on the review packet above, under the owner's delegated estate-push authority following an independent Fable review, which returned ACCEPT: strict `sha256:` ETags over the full buffer on every read mode, `if_match` checked after containment and before dry-run or any filesystem effect, all tool mutations serialised through one FIFO queue, the ADR indexed, and typecheck, 316 tests and 100% coverage passing. Advisory notes retained for follow-up: `src/main/notes` write/rename/delete helpers are not routed through the queue (they are not registered as tools); `CHANGELOG.md` has no entry; the `EACCES` test relies on `chmod 000` and would not fail as root; the queue serialises mutations across unrelated bases.
 
 ## Discussion
 
