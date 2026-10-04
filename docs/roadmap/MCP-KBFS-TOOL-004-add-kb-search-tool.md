@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-01T19:27:46Z
+updated_at: 2026-10-04T10:56:50Z
 ---
 
 # Add kb_search tool
@@ -33,6 +33,14 @@ The search tool needs the pilot evidence and authoritative trust-boundary mappin
 Return this item to Next when the qmd pilot in [the harness search proposal](../../../ki-agentic-harness/docs/roadmap/KI-HARNESS-FND-028-adopt-qmd-kb-search.md) is recorded and the index owner publishes a concrete mapping and daemon request/response contract. Confirm how query/search/vsearch modes, collection restrictions, unavailable indexes, daemon errors, and source-store mirror labels are represented. [The mirror-content proposal](../../../ki-agentic-harness/docs/roadmap/KI-HARNESS-GOV-121-require-substantive-store-mirrors.md) is also still Triage; its metadata contract must be agreed before the tool can implement the promised labels.
 
 The implementation plan must prove that an untrusted daemon result cannot leak a snippet, title, docid, or other content from a different base, protected path, symlink escape, or undeclared zone. Validate scope before exposing any returned content, and keep index creation and daemon installation with their existing owners. These are external conditions, not local `blocked_by` edges.
+
+## Current state
+
+The 2026-10-04 delegated review re-read all three upstream records. `KI-TOOL-CLI-091` remains Waiting for / draft; `KI-HARNESS-FND-028` and `KI-HARNESS-GOV-121` remain Triage / draft. Their retained records contain no completed pilot evidence, accepted authoritative trust-boundary assignment, or settled source-store mirror labels. These external prerequisites remain unmet; no local dependency edge or fabricated trade wait is introduced.
+
+## Verify
+
+Before leaving Waiting for, re-read the upstream records and their named durable evidence. Require actual pilot results, an explicit mapping owner and contract, pinned daemon request/response evidence, and agreed mirror labels. A later plan must test hostile daemon results against base, zone, protected-path and symlink boundaries before returning any content. Do not inspect or search real private KB content as part of this roadmap review.
 
 ## Discussion
 

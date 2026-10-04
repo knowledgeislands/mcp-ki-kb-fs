@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-07-29T00:37:05Z
-updated_at: 2026-10-01T19:27:46Z
+updated_at: 2026-10-04T10:56:50Z
 ---
 
 ## Goal
@@ -42,6 +42,7 @@ Add `etag` to reads and optional `if_match` to `kb_write`. Keep `kb_write` destr
 - [src/main/files/index.ts](../../src/main/files/index.ts) and its co-located tests: validators, serialised mutations, precondition checks, and result contract.
 - [src/tools/kb/index.ts](../../src/tools/kb/index.ts) and its co-located registration tests: argument and result schemas, descriptions, and unchanged annotation checks.
 - A small helper under `src/main/files/` only if needed to isolate the mutation queue or digest logic, with co-located tests.
+- The repository decision-record area: record the accepted process-local guarantee and unrelated-editor limitation.
 - [README.md](../../README.md) and the existing filesystem user guide that owns read/write procedures: concurrency contract and examples.
 
 ## Verify
@@ -54,7 +55,7 @@ Add `etag` to reads and optional `if_match` to `kb_write`. Keep `kb_write` destr
 
 ## Dependencies / blocks
 
-No build dependency. Publication as Ready is conditional on the owner's explicit acceptance of the server-process guarantee and the residual unrelated-editor race. Absent that decision, keep this record Next / draft.
+No build dependency. The principal explicitly approved the server-process guarantee and residual unrelated-editor race in the MCP roadmap review on 2026-10-02. This approval resolves the concurrency scope decision; it does not itself publish a Ready transition or authorise implementation. Keep the current Next / draft state during this planning-only pass.
 
 ## Documentation impact
 
@@ -78,11 +79,11 @@ Do not fold delete/rename preconditions or a cross-process coordination service 
 
 ### Etag derivation
 
-A content hash is honest but requires reading the whole file on every read — which `readFile` already does — while a stat-based validator (mtime plus size) is cheaper but can miss same-second, same-size edits on coarse filesystem timestamps. The choice is open, and it should be made explicitly rather than falling out of the implementation.
+A content hash is honest but requires reading the whole file on every read — which `readFile` already does — while a stat-based validator (mtime plus size) is cheaper but can miss same-second, same-size edits on coarse filesystem timestamps. The proposed plan selects SHA-256 over the complete bytes, matching the explicit Steps above; no stat-based shortcut is proposed.
 
 ### Precondition and atomicity
 
-The existing temp-file-plus-`rename` write is atomic in the sense that no reader sees a partial file, but a check-then-write against `if_match` is not atomic against a concurrent writer: another process can replace the target between the validation read and the `rename`. Whether that residual window is acceptable — this is a single-user local filesystem server — or whether it warrants a stronger mechanism is the main unresolved question.
+The existing temp-file-plus-`rename` write is atomic in the sense that no reader sees a partial file, but a check-then-write against `if_match` is not atomic against a concurrent writer: another process can replace the target between the validation read and the `rename`. The principal accepted that residual unrelated-editor window. The delivery contract promises serialization only among mutations through this server process; a cross-process coordination protocol remains outside scope.
 
 ### Scope of the etag
 
@@ -90,4 +91,4 @@ Only `kb_write` is in scope for `if_match`. Whether `kb_delete` and `kb_rename` 
 
 ### Readiness review
 
-SHA-256 and process-wide mutation serialisation are the proposed bounded design. The earlier open concurrency question remains an owner decision until the limited guarantee is explicitly accepted; this plan must not be marked Ready merely because the implementation steps are concrete.
+SHA-256 and process-wide mutation serialisation are the bounded design. The principal accepted the process-local guarantee and unrelated-editor limit on 2026-10-02. The implementation plan and verification gates above are concrete; the current record remains Next / draft because this pass records analysis rather than performing selection or readiness publication.
