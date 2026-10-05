@@ -4,12 +4,12 @@ area: TOOL
 title: Add kb_search tool
 theme: tool-surface
 horizon: now
-status: awaiting-review
+status: done
 blocks: []
 blocked_by: []
 baseline_ref: 27cdc7fab09b00a2e379b8c7209111e8e4934042
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-05T13:10:20Z
+updated_at: 2026-10-05T13:12:05Z
 ---
 
 # MCP-KBFS-TOOL-004: Add kb_search tool
@@ -150,6 +150,10 @@ The author inspected exact baseline/source paths, schema/access-gate wiring, cur
 ### Mini recap
 
 Optional per-KB search is delivered with explicit index authority, current local citations, strict dispatch schemas and privacy-preserving audit outcomes. Required gates and synthetic modern/legacy verification pass. Durable behavior and operator procedures live in `docs/specs/kb-search.md` and `docs/guides/user/kb-search.md`; no additional backlog or learning promotion is needed. Awaiting independent exact-hash review and root acceptance.
+
+## Done
+
+Accepted under the principal-approved singleton outcome batch. Root and the independent reviewer approved exact clean `4da2631f048f144b34bee31d9d49c07364598568`, whose source is unchanged from independently reviewed `b1604776da73a300270be29f48bd7a5ae5df2012`. Required verification passed: 346 tests across 17 files, 100% statements/branches/functions/lines, TypeScript, compiled build, modern/legacy smokes, Biome, Knip and MCP/engineering/authoring/specs/roadmap audits. Independent public SDK verification passed 149 assertions with both client and compiled server on minimum Node 22.16.0 and Node 24.21.0, including pre/post retrieval zone revocation. Optional operator provisioning, derived-cache maintenance, daemon identity, bounded retrieval and concurrency limits remain as recorded in Review. No private KB indexing, live provider operations, publication or push occurred.
 
 ## Discussion
 
