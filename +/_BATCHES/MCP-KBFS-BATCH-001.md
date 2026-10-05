@@ -17,3 +17,8 @@ policy: safe-local-v1
 ## Run ledger
 
 <!-- ki-batch-run: MCP-KBFS-BATCH-001-RUN-001 aee62ab625dc17c07084b1cac458f9729fb0b354146bf93a5b915a5f6971412c -->
+| Item | Result | Baseline | Result commit | Exception |
+| --- | --- | --- | --- | --- |
+| MCP-KBFS-TOOL-004 | done | `27cdc7fab09b00a2e379b8c7209111e8e4934042` | `b4544e4860c6415f27ac1810f163848e5e045e3d` | None |
+
+<!-- ki-batch-close: MCP-KBFS-BATCH-001 done b4544e4860c6415f27ac1810f163848e5e045e3d -->
