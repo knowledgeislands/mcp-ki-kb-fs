@@ -4,7 +4,7 @@ How the server is put together, what each layer is allowed to know, and which in
 
 ## The four layers
 
-Dependencies point strictly downwards. Nothing in `src/main/` imports from `src/tools/`, and nothing in `src/utils/` imports from either.
+Dependencies point strictly downwards. Nothing in `src/main/` imports from `src/tools/`, and nothing in `src/utils/` imports from either. `.dependency-cruiser.ts` states each of these directions as a named forbidden rule, and `src/boundaries.test.ts` cruises the whole source graph and proves every rule still rejects a deliberate crossing — so a violation fails `bun run test` with the rule's comment rather than surviving review.
 
 **`src/mcp-server/index.ts` — the entry point.** It calls `loadConfig()` once at module scope, reports the resolved configuration to stderr, installs the access gate, and hands a server factory to `serveStdio`. It is the only file that reads the environment or writes to stderr.
 

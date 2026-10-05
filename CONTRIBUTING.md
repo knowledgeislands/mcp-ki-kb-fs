@@ -8,6 +8,7 @@ Thanks for your interest. This file is the contribution contract: what a change 
 git clone https://github.com/knowledgeislands/mcp-ki-kb-fs.git
 cd mcp-ki-kb-fs
 bun install
+bun install --cwd tooling/boundaries
 ```
 
 `bun install` runs `prepare`, which installs the husky hooks — so every commit auto-formats staged files and checks the commit message.

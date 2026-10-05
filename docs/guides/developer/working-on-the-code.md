@@ -12,9 +12,12 @@ Bun drives the loop; Node runs `dist/`. That split is deliberate — the publish
 git clone https://github.com/knowledgeislands/mcp-ki-kb-fs.git
 cd mcp-ki-kb-fs
 bun install
+bun install --cwd tooling/boundaries
 ```
 
 `bun install` runs `prepare`, which installs the husky hooks. Skipping it means your commits bypass formatting and commit-message checks that CI will not.
+
+The second install is the boundary checker's own root. dependency-cruiser supports TypeScript below 7 only, so it lives in `tooling/boundaries/` with its own lockfile rather than in the repository's TypeScript 7 install; `src/boundaries.test.ts` fails until it is present.
 
 ## Running it
 
@@ -79,7 +82,7 @@ ki repo audit --skill ki-guides --repo .  # one skill
 
 ## What CI runs
 
-The workflow installs the toolchain with mise, runs `bun install --frozen-lockfile`, installs a pinned isolated KI CLI and bootstraps it, then runs:
+The workflow installs the toolchain with mise, runs `bun install --frozen-lockfile` for the repository and for `tooling/boundaries`, installs a pinned isolated KI CLI and bootstraps it, then runs:
 
 1. `ki repo audit --repo .`
 2. `bun run test`
