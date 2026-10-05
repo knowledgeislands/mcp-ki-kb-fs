@@ -16,3 +16,4 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 ### Changed
 
 - `kb_search` results label source mirrors from `mirrors`, `mirror_type` and `mirror_sha256`, which replace the `source_path` and `source_sha256` result fields; that provenance no longer makes a note a mirror.
+- `kb_search` labels a mirror `extract` from its non-`indexed` `mirror_type` whenever the body has content, replacing the 40-word extract minimum; an empty body is a `pointer`.

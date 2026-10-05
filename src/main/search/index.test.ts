@@ -453,12 +453,12 @@ describe('source-authenticated optional search', () => {
 it('vendored source has exact pinned upstream digests with only the declared import adaptation', () => {
   const directory = join(import.meta.dirname, '../../generated/kb-search')
   const receipt = JSON.parse(readFileSync(join(directory, 'receipt.json'), 'utf8'))
-  expect(receipt.commit).toBe('d794bc9f2bb8fad7b20e390b3e8ec1c4f5617394')
+  expect(receipt.commit).toBe('2f37fb0e94953ee9911cdf4f262f40176523d03c')
   expect(receipt.files['contract.ts'].source_sha256).toBe(
     '5197d9b37a99784c7134966d32d37eb6d6700fc09663438b135307bf657b6100'
   )
   expect(receipt.files['source-mirrors.ts'].source_sha256).toBe(
-    'df7e86d4d0cf3197f8d919d8a9624adab5b550b3eb36ab6cba5d5c7c83f6a6f9'
+    'aeb36ba9e9840989b38f87ff81360c29239fe530ac0aed8fb43e2a0d4f134128'
   )
   for (const [name, value] of Object.entries(receipt.files) as [
     string,
