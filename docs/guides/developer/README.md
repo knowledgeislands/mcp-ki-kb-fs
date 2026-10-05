@@ -25,4 +25,4 @@ The user-facing side of the same system is under [user guides](../user/README.md
 
 Why the design is as it is belongs in `docs/decisions/`; what is planned belongs in `docs/roadmap/`. Those are record locations rather than prerequisites for following these guides.
 
-Optional derived search behavior and its executable evidence are specified in [KB search](../../specs/kb-search.md); the [user guide](../user/kb-search.md) covers operator bindings and recovery.
+Optional derived search behaviour and its executable evidence are specified in the KB search Specification, `docs/specs/kb-search.md`; the [user guide](../user/kb-search.md) covers operator bindings and recovery.

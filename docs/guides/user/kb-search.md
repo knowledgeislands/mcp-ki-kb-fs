@@ -4,7 +4,7 @@ Use `kb_search` to retrieve a few relevant local notes from one declared `kb`. I
 
 ## Bind prepared search state
 
-Follow the [tools operator guide](../../../../tools-ki/docs/guides/user/kb-search.md) to register the KB with one explicit unique search boundary, provision pinned local models, create a current sanitized index generation and configure its one-KB daemon. The [mapping specification](../../../../tools-ki/docs/specs/kb-search.md) owns the generated state contract.
+Follow the `tools-ki` KB search operator guide (`docs/guides/user/kb-search.md` in that repository) to register the KB with one explicit unique search boundary, provision pinned local models, create a current sanitized index generation and configure its one-KB daemon. The `tools-ki` KB search Specification (`docs/specs/kb-search.md` in that repository) owns the generated state contract.
 
 Add the optional environment binding alongside the ordinary KB declaration, then restart this MCP server:
 
@@ -27,4 +27,4 @@ Returned paths and line windows refer to current authorized local Markdown. Read
 
 A missing binding, model, endpoint, changed declaration, stale source/projection or failed audit append produces an unavailable/error result. Ask the operator to inspect or refresh explicit derived state. The agent can use literal grep and targeted reads through its QUERY workflow while search remains unavailable; this server does not silently switch retrieval methods.
 
-Search preserves canonical KB/registry authority. The daemon may write disposable retrieval caches, so read-only does not promise zero cache maintenance. Loopback alone does not authenticate local clients; expose the governed MCP tool rather than a raw qmd daemon. Enabled `writes`/`all` audit logs record search outcomes without query text, snippets or document paths; `off` retains its explicit opt-out. See the [accepted search contract](../../specs/kb-search.md) for the precise protocol, audit limits and evidence.
+Search preserves canonical KB/registry authority. The daemon may write disposable retrieval caches, so read-only does not promise zero cache maintenance. Loopback alone does not authenticate local clients; expose the governed MCP tool rather than a raw qmd daemon. Enabled `writes`/`all` audit logs record search outcomes without query text, snippets or document paths; `off` retains its explicit opt-out. This repository's KB search Specification (`docs/specs/kb-search.md`) is the accepted contract for the precise protocol, audit limits and evidence.
