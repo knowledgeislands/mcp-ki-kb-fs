@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { stringify } from 'yaml'
 import { Client } from '@modelcontextprotocol/client'
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
-import { ENGINE, modelPaths, sha256 } from '../dist/generated/kb-search/contract.js'
+import { ENGINE, modelPaths, sha256 } from '../src/generated/kb-search/contract.js'
 
 const fixture = () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'kb-search-')))
