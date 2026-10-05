@@ -4,12 +4,12 @@ area: TOOL
 title: Add kb_search tool
 theme: tool-surface
 horizon: now
-status: in-progress
+status: awaiting-review
 blocks: []
 blocked_by: []
 baseline_ref: 27cdc7fab09b00a2e379b8c7209111e8e4934042
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-05T13:08:08Z
+updated_at: 2026-10-05T13:09:18Z
 ---
 
 # MCP-KBFS-TOOL-004: Add kb_search tool
@@ -51,7 +51,7 @@ Harness accepted receipt `e093d3ad08f59376b22ce18c3c74b197fe85fb85` (and subsequ
 - [x] Register kb_search through the existing annotation/access gate, use required kb enum and strict bounded schema, then install the narrow public SDK search audit wrapper with exact-once redacted outcomes and off respected.
 - [x] Add isolated synthetic fixtures for hostile backend content/paths/docids, zones, registry/owner/declaration/generation/projection/current-source drift, changed nested/symlink boundaries, all unavailable/error paths, model and transport bounds, and strict public input/output. Exercise actual modern/legacy SDK dispatch validation/audit and compiled Node22 transport.
 - [x] Update the capability inventory, user/developer guides and accepted behavior spec, including optional provisioning, read/cache distinction, URI/line authority, non-exhaustive results and explicit QUERY-owned fallback.
-- [ ] Run all required gates sequentially in the coordinator-assigned heavy window; prepare the six-heading Review immediately before final Discussion, transition only this record to Awaiting review, commit intended paths and return the exact clean candidate. Root/independent reviewer owns approval, Done and prune.
+- [x] Run all required gates sequentially in the coordinator-assigned heavy window; prepare the six-heading Review immediately before final Discussion, transition only this record to Awaiting review, commit intended paths and return the exact clean candidate. Root/independent reviewer owns approval, Done and prune.
 
 ## Files touched
 
@@ -112,6 +112,44 @@ One selected item and exact singleton outcome envelope; no dynamically admitted 
 The source is implemented against the immutable Ready/batch baseline. Required gates pass: 346 tests and 100% statements/branches/functions/lines; tsc/build/Biome/Knip; compiled modern/legacy smoke; MCP, engineering, authoring, specs and roadmap audits. Runtime evidence is under `/tmp/mcp-roadmap-completion-20261005/mcp-kbfs-*-final.log`. Parent independently ran the public SDK fixture using minimum Node22.16.0 (120 assertions); the independent reviewer expanded its fixture to 149 assertions. Exact terminal review binds the forthcoming clean packet commit.
 
 Independent review identified and fixed a fresh canonical-zone revocation gap. The adapter now resolves current zones from the exact declaration snapshot and compares current, mapping and startup authority before and after retrieval; reblessed digest changes cannot retain revoked folder access. Required local lexical/physical/protected note-path filters are applied alongside unchanged pinned vendor guards. No private KB/store or global binding was read or changed.
+
+## Review
+
+### Delivered
+
+Delivered the approved optional one-KB search boundary from immutable implementation baseline `27cdc7fab09b00a2e379b8c7209111e8e4934042`. Clean source commit `b1604776da73a300270be29f48bd7a5ae5df2012` contains exactly 35 intended files; the hook changed zero bytes and captured no unrelated work. The upstream pinned interface remains `d6222b752d5f5ee3ef36c7bac55eec3f67629c87`; parent accepted the completed CLI delivery independently. This is local source delivery with synthetic verification, no private KB/store/provider operation, package publication, push, live binding or read-time provisioning. Root owns acceptance/Done/prune.
+
+### Change Summary
+
+Added strict `kb_search` at the read annotation/access gate, normalized public `path_prefix` to strict main `pathPrefix`, and source-authenticated local snippets/citations/labels. Explicit aliases bind stable unique registry identities and trust boundaries; bounded state/owner/config/projection/declaration/source proofs are checked before and after typed loopback HTTP retrieval. Canonical current zones are derived from the exact fresh declaration snapshot and must agree with both the mapping and startup bundle, closing independently reproduced reblessed-digest revocation. Local lexical/physical/protected path helpers supplement unchanged portable guards.
+
+Vendored the approved Node-neutral contract and canonical helper with exact digest receipt and normalized-byte drift tests; only the helper import suffix changes. Added explicit YAML runtime dependency, conservative canonical/legacy zone migration, symlink-safe declaration reads and privacy-preserving public SDK dispatch audit. Writes/all cover recognizable success, validation and output failures exactly once; off remains off and append failure refuses unaudited success. Other read semantics remain unchanged. Documentation, accepted numbered specification, developer/user guidance, capability inventory and changelog now describe optional provisioning, cache side effects, local line authority and explicit unavailable states.
+
+Exact paths are recorded in Files touched and the coordinator's `/tmp/mcp-roadmap-completion-20261005/mcp-kbfs-owned.json`; actual baseline/source diff was checked against that 35-path ownership receipt. No unrelated paths were changed or staged.
+
+### Verification
+
+All checks passed sequentially on unchanged source with required coverage thresholds retained. Logs are `/tmp/mcp-roadmap-completion-20261005/mcp-kbfs-<gate>-final.log`:
+
+- `tsc`: `bunx tsc --noEmit`; `test`: `bun run test`, 346 tests in 17 files, zero failures.
+- `coverage`: `bun run test:coverage`, 100% statements (916/916), branches (637/637), functions (113/113) and lines (824/824).
+- `build`: compiled Node build; `smoke`: ordinary modern 2026-07-28/legacy surface plus synthetic lexical/vector/hybrid/local-citation/privacy audits through real compiled Node SDK sessions.
+- `biome` and `knip`: pass; Knip reports only six existing configuration hints, no errors.
+- `mcp`, `engineering`, `authoring`, `specs`, `roadmap`: focused governance audits pass with no failures or warnings.
+
+Independent public SDK verification is retained at `/tmp/mcp-roadmap-completion-20261005/search-sdk-independent.mjs`. Parent ran its 120-assertion snapshot using minimum Node22.16.0 (`search-sdk-independent-node22.log`); reviewer expanded it to 149 assertions including malformed inputs, model refusal, unchanged bytes/modes, Alpha/Omega isolation, hostile backend text/docid, audit append failure and fresh zone revocation before/after retrieval. Tools reviewer separately reproduced corrected pre-fetch revocation (zero daemon calls) and post-fetch refusal in `/tmp/ki-mcp-independent-revocation.ts`. Exact terminal reviewer approval binds the final clean packet commit separately.
+
+### Outstanding concerns
+
+No unresolved delivery or verification failure remains. Search remains explicitly optional and requires operator-provisioned current state/models/one-KB daemon. HTTP hybrid differs from CLI expansion; bounded results are non-exhaustive, loopback does not authenticate other local clients, and daemon health cannot attest index identity. A wrong explicitly assigned daemon can return ambiguous empty results. Disposable derived retrieval cache maintenance is permitted. Tiny synthetic evidence does not establish large/private-scale efficiency. Unrecognizable or SDK codec-rejected protocol envelopes outside the public handler cannot be promised search audit events, and unavailable storage cannot promise a physical append. These accepted limits are recorded in the specification and operator guidance.
+
+### Post-change review
+
+The author inspected exact baseline/source paths, schema/access-gate wiring, current-source/canonical-zone revocation, vendor digests, Node-neutral imports, local line reconstruction, logging privacy and no provisioning on reads. Independent reviewers performed production source review and synthetic public runtime assertions; they found and verified the correction of the fresh-zone gap. Final approval remains independent of this author and binds the clean handoff hash. Root will accept/Done and close the exact outcome batch; its run marker stays until that authority acts.
+
+### Mini recap
+
+Optional per-KB search is delivered with explicit index authority, current local citations, strict dispatch schemas and privacy-preserving audit outcomes. Required gates and synthetic modern/legacy verification pass. Durable behavior and operator procedures live in `docs/specs/kb-search.md` and `docs/guides/user/kb-search.md`; no additional backlog or learning promotion is needed. Awaiting independent exact-hash review and root acceptance.
 
 ## Discussion
 
