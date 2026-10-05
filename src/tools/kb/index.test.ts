@@ -78,6 +78,7 @@ const SAMPLE_ARGS: Record<string, Record<string, unknown>> = {
   kb_list: { path: ZONE },
   kb_read: { path: `${ZONE}/Note.md` },
   kb_rename: { from: `${ZONE}/Note.md`, to: `${ZONE}/Moved.md` },
+  kb_search: { query: 'synthetic' },
   kb_write: { path: `${ZONE}/Note.md`, content: 'x' }
 }
 
@@ -91,7 +92,7 @@ afterAll(async () => {
 })
 
 describe('tool surface', () => {
-  it('registers exactly the seven documented tools', () => {
+  it('registers exactly the eight documented tools', () => {
     expect(allTools().map((tool) => tool.name)).toEqual([
       'kb_config',
       'kb_delete',
@@ -99,6 +100,7 @@ describe('tool surface', () => {
       'kb_list',
       'kb_read',
       'kb_rename',
+      'kb_search',
       'kb_write'
     ])
   })

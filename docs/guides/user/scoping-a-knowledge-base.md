@@ -24,8 +24,11 @@ The rule is deliberately coarse. It means the KB root itself is never listable a
 If a base uses different folder names, declare them in a `.ki.toml` at the base's root:
 
 ```toml
-[knowledgeislands-kb]
-zones = { Pillars = "Knowledge", Resources = "Reference" }
+[skills.ki-repo-kb.zones]
+Pillars = "Knowledge"
+Resources = "Reference"
+"+" = "Incoming"
+"-" = "Outgoing"
 ```
 
 Any zone you do not name keeps its canonical default, so partial declarations are fine. The mapping is from the canonical zone to the local folder name: after the example above, `Knowledge/Finance/Budget.md` is reachable and `Pillars/…` is not.
@@ -33,6 +36,12 @@ Any zone you do not name keeps its canonical default, so partial declarations ar
 The file is read once, at server startup, at the same moment the base is resolved — so a base's root, zone map, and allow-list travel together as one bundle and there is no way to pair one base's folders with another's configuration. Editing `.ki.toml` needs a client restart, exactly like editing the declaration.
 
 `kb_config` returns the resolved names along with the raw file, which is the quickest way to see what a base actually resolved to rather than what you meant it to.
+
+## Migrating legacy zones
+
+Existing file readers continue to accept safe explicit `[knowledgeislands-kb.zones]` values. Copy those values to canonical `[skills.ki-repo-kb.zones]`, using quoted `"+"`/`"-"` keys for legacy `inbound`/`outbound`, then remove the retired zones table and restart. Equal declarations remain compatible for file reads, but conflicting, overlapping or unsafe paths abort startup. Search requires the canonical declaration and refuses any remaining retired zones table, even when equal. Leave an existing legacy root-file allow-list in place; this change does not broaden it.
+
+Declaration files must be confined regular files within the KB root. A symlink or oversized `.ki.toml` is refused before reading bytes or reporting parse errors. No migration runs automatically on a read.
 
 ## The root-file allow-list
 

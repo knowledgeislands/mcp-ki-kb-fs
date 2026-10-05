@@ -10,6 +10,7 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseToml } from 'smol-toml'
+import { record, SOURCE_BYTES, safeId, safePath } from '../generated/kb-search/contract.js'
 import { errMessage } from '../utils/utils.js'
 
 const expandHome = (p: string): string => {
@@ -116,6 +117,8 @@ export interface KnowledgeBase {
   rootFileAllowlist: readonly string[]
   /** Raw .ki.toml text if present, null if absent. */
   kiConfigRaw: string | null
+  /** Explicit optional registry binding. A read never creates missing derived state. */
+  search?: { registryId: string; stateDirectory: string }
 }
 
 export interface Config {
@@ -196,6 +199,19 @@ const loadKiConfig = (
 ): { zones: ResolvedZones; rootFileAllowlist: readonly string[]; kiConfigRaw: string | null } => {
   const configPath = path.join(rootPath, '.ki.toml')
   let raw: string | null = null
+  let stat: fs.Stats
+  try {
+    stat = fs.lstatSync(configPath)
+  } catch {
+    return { zones: { ...DEFAULT_ZONES }, rootFileAllowlist: [...DEFAULT_ROOT_FILE_ALLOWLIST], kiConfigRaw: null }
+  }
+  if (
+    !stat.isFile() ||
+    stat.isSymbolicLink() ||
+    stat.size > SOURCE_BYTES ||
+    fs.realpathSync(configPath) !== path.join(fs.realpathSync(rootPath), '.ki.toml')
+  )
+    throw new Error('Unsafe .ki.toml declaration: require a confined regular file.')
   try {
     raw = fs.readFileSync(configPath, 'utf-8')
   } catch {
@@ -203,6 +219,13 @@ const loadKiConfig = (
     return { zones: { ...DEFAULT_ZONES }, rootFileAllowlist: [...DEFAULT_ROOT_FILE_ALLOWLIST], kiConfigRaw: null }
   }
 
+  return resolveKiDeclaration(raw)
+}
+
+/** Resolve one declaration snapshot; search reuses this without rereading paths. */
+export const resolveKiDeclaration = (
+  raw: string
+): { zones: ResolvedZones; rootFileAllowlist: readonly string[]; kiConfigRaw: string } => {
   let parsed: Record<string, unknown>
   try {
     parsed = parseToml(raw) as Record<string, unknown>
@@ -213,20 +236,36 @@ const loadKiConfig = (
   }
 
   const kb = (parsed['knowledgeislands-kb'] ?? {}) as Record<string, unknown>
-  const declared = (kb.zones ?? {}) as Record<string, unknown>
+  const legacy = record(kb.zones) ? kb.zones : {}
+  const skills = record(parsed.skills) ? parsed.skills : {}
+  const canonical = record(skills['ki-repo-kb']) ? skills['ki-repo-kb'] : {}
+  const declared = canonical.zones
+  const keys = Object.keys(DEFAULT_ZONES)
+  const canonicalKey = (key: string): string => (key === 'inbound' ? '+' : key === 'outbound' ? '-' : key)
+  if (
+    declared !== undefined &&
+    (!record(declared) || Object.keys(declared).some((key) => !keys.map(canonicalKey).includes(key)))
+  )
+    throw new Error('Invalid canonical KB zones.')
 
   const str = (v: unknown, fallback: string): string => (typeof v === 'string' && v.trim() ? v.trim() : fallback)
+  const zones = { ...DEFAULT_ZONES }
+  for (const key of keys as (keyof ResolvedZones)[]) {
+    const prior = str(legacy[key], DEFAULT_ZONES[key])
+    const current = record(declared) ? declared[canonicalKey(key)] : undefined
+    if (current !== undefined && (typeof current !== 'string' || !safePath(current)))
+      throw new Error('Invalid canonical KB zone path.')
+    if (!safePath(prior)) throw new Error('Unsafe legacy KB zone path.')
+    if (current !== undefined && legacy[key] !== undefined && current !== prior)
+      throw new Error('Conflicting canonical and legacy KB zones; migrate explicitly.')
+    zones[key] = typeof current === 'string' ? current : prior
+  }
+  const paths = Object.values(zones)
+  if (paths.some((zone, i) => paths.some((other, j) => i !== j && (zone === other || zone.startsWith(`${other}/`)))))
+    throw new Error('Overlapping KB zones.')
 
   return {
-    zones: {
-      Calendar: str(declared.Calendar, DEFAULT_ZONES.Calendar),
-      Pillars: str(declared.Pillars, DEFAULT_ZONES.Pillars),
-      Resources: str(declared.Resources, DEFAULT_ZONES.Resources),
-      Streams: str(declared.Streams, DEFAULT_ZONES.Streams),
-      Admin: str(declared.Admin, DEFAULT_ZONES.Admin),
-      inbound: str(declared.inbound, DEFAULT_ZONES.inbound),
-      outbound: str(declared.outbound, DEFAULT_ZONES.outbound)
-    },
+    zones,
     rootFileAllowlist: parseRootFileAllowlist(kb.root_file_allowlist),
     kiConfigRaw: raw
   }
@@ -366,6 +405,35 @@ const parseKnowledgeBases = (raw: string | undefined): ReadonlyMap<string, Knowl
   return bases
 }
 
+const bindSearch = (bases: ReadonlyMap<string, KnowledgeBase>, raw: string | undefined): void => {
+  if (raw === undefined || raw.trim() === '') return
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    throw new Error('Invalid MCP_KI_KB_FS_SEARCH_BINDINGS JSON.')
+  }
+  if (!record(parsed)) throw new Error('Search bindings must be an alias-keyed object.')
+  const identities = new Set<string>()
+  for (const [alias, value] of Object.entries(parsed)) {
+    const base = bases.get(alias)
+    if (
+      !base ||
+      !record(value) ||
+      Object.keys(value).sort().join('|') !== 'registry_id|state_directory' ||
+      !safeId(value.registry_id) ||
+      typeof value.state_directory !== 'string' ||
+      !path.isAbsolute(value.state_directory) ||
+      value.state_directory !== path.resolve(value.state_directory)
+    )
+      throw new Error('Invalid explicit search binding.')
+    const identity = `${value.state_directory}/${value.registry_id}`
+    if (identities.has(identity)) throw new Error('Duplicate search registry binding.')
+    identities.add(identity)
+    base.search = { registryId: value.registry_id, stateDirectory: value.state_directory }
+  }
+}
+
 /** Declared aliases, in declaration order. */
 export const knowledgeBaseAliases = (cfg: Config): string[] => [...cfg.knowledgeBases.keys()]
 
@@ -393,9 +461,11 @@ export const selectKnowledgeBase = (cfg: Config, alias: string): KnowledgeBase =
  */
 export const loadConfig = (env: NodeJS.ProcessEnv = process.env): Config => {
   hydrateEnvFromFiles()
+  const knowledgeBases = parseKnowledgeBases(env[KNOWLEDGE_BASES_ENV_VAR])
+  bindSearch(knowledgeBases, env.MCP_KI_KB_FS_SEARCH_BINDINGS)
 
   return {
-    knowledgeBases: parseKnowledgeBases(env[KNOWLEDGE_BASES_ENV_VAR]),
+    knowledgeBases,
     accessLevel: parseAccessLevel(env.MCP_KI_KB_FS_ACCESS_LEVEL),
     auditLogMode: parseAuditLogMode(env.MCP_KI_KB_FS_AUDIT_LOG),
     auditLogPath: path.resolve(

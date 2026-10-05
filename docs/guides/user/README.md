@@ -10,6 +10,7 @@ Changing the server's code is a different job and lives in [the developer guides
 - [Declaring your knowledge bases](declaring-knowledge-bases.md) — the declaration that is this install's authorisation boundary: alias grammar, what startup validates, why there is no default base, and what one call may reach.
 - [Scoping a knowledge base](scoping-a-knowledge-base.md) — what is reachable inside a base once it is declared: zones and staging areas, the `.ki.toml` overrides, the read-only root-file allow-list, and protected paths.
 - [Reading and writing notes](reading-and-writing-notes.md) — the working loop: orienting in an unfamiliar base, finding and reading notes, capturing new ones safely, and moving or removing them.
+- [Searching a knowledge base](kb-search.md) — optional explicit index bindings, local snippets and unavailable-state recovery.
 - [Choosing an access level](choosing-an-access-level.md) — what each level registers, why tool visibility is a different safeguard from `dry_run`, and what the audit log records.
 - [Troubleshooting](troubleshooting.md) — the failures this server actually produces, what each one means, and how to recover.
 
@@ -23,4 +24,4 @@ You own three decisions, and the server honours all three without arguing.
 
 **How much may be done.** `MCP_KI_KB_FS_ACCESS_LEVEL` decides which tools exist in the session at all. A model cannot talk you into a tool that was never registered.
 
-The server owns none of these at runtime. Both the environment and each base's `.ki.toml` are read once at startup and never re-read, so changing any of them means restarting the server through your client.
+The server owns none of these at runtime. Startup resolves the environment and each base's zones once, so editing these declarations requires a restart. Search additionally rechecks current declaration, derived-state and source proofs on every call and refuses drift until the owner refreshes state.

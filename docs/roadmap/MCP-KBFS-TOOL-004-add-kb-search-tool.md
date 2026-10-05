@@ -4,12 +4,12 @@ area: TOOL
 title: Add kb_search tool
 theme: tool-surface
 horizon: now
-status: ready
+status: in-progress
 blocks: []
 blocked_by: []
-baseline_ref: null
+baseline_ref: 27cdc7fab09b00a2e379b8c7209111e8e4934042
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-05T12:20:14Z
+updated_at: 2026-10-05T13:08:08Z
 ---
 
 # MCP-KBFS-TOOL-004: Add kb_search tool
@@ -32,38 +32,38 @@ Validate current registry identity/explicit boundary, physical KB root, canonica
 
 Canonical zones come from `skills.ki-repo-kb.zones`, including quoted "+"/"-" staging keys. Keep explicit safe legacy `knowledgeislands-kb` compatibility for existing file readers and root-file allow-list, reject conflicting canonical/legacy zone declarations, and require canonical indexing authority for search. Reject symlinked declaration files before reading bytes or producing parse errors. Existing other-read audit semantics stay intact.
 
-A narrow public SDK `tools/call` registration wrapper observes recognizable search dispatch outcomes, including tool input validation before callbacks; suppress the ordinary callback audit only for search. Modes `writes` and `all` log search successes and failures exactly once; `off` remains off. Whitelist configured alias, valid mode, outcome and query byte count/type only, never raw query/arguments, results, document IDs, private paths or backend error text. Malformed or undelivered protocol envelopes outside the SDK's public handler boundary cannot be represented as a completed search invocation; disclose that limit rather than claiming invisible audit coverage.
+A narrow public SDK `tools/call` registration wrapper observes recognizable search dispatch outcomes, including tool input validation before callbacks; suppress the ordinary callback audit only for search. Modes `writes` and `all` append search successes and failures exactly once when storage is available; `off` remains off. Enabled append failure returns a sanitized audit-unavailable error rather than an unaudited successful search; physical events cannot be promised when storage fails. Other audit behavior is unchanged. Whitelist configured alias, valid mode, outcome and query byte count/type only, never raw query/arguments, results, document IDs, private paths or backend error text. Malformed or undelivered protocol envelopes outside the SDK's public handler boundary cannot be represented as a completed search invocation; disclose that limit rather than claiming invisible audit coverage.
 
 No install, model download, index creation/refresh, daemon startup, live client binding, provider mutation, private KB access, publication, push or self-acceptance. Search does not mutate canonical KB/registry authority; the operator daemon may maintain its own disposable derived retrieval cache. Root owns independent review, acceptance and pruning.
 
 ## Current state
 
-The baseline source is `fa0135cee7a4905068e115d991902eb4b645c082`; the source remains unchanged after docs receipt `85cd6dc06bedeb49fcabd820ebb25d708bec6a01`. One draft item exists; no active source overlap or dirty paths. The server uses SDK 2.3.0, modern 2026-07-28 plus retained legacy factory, strict schemas, read-only annotation gates and Node22 compiled runtime. Existing zones read only retired knowledgeislands-kb configuration. Callback audit misses pre-callback SDK validation and excludes read search under writes. The author has sole MCP Git write ownership; all fixtures remain synthetic.
+At planning, the baseline source was `fa0135cee7a4905068e115d991902eb4b645c082`; the source remains unchanged after docs receipt `85cd6dc06bedeb49fcabd820ebb25d708bec6a01`. One selected item existed with no active source overlap or dirty paths. The server uses SDK 2.3.0, modern 2026-07-28 plus retained legacy factory, strict schemas, read-only annotation gates and Node22 compiled runtime. At baseline, zones read only retired knowledgeislands-kb configuration. Baseline callback audit misses pre-callback SDK validation and excludes read search under writes. The author has sole MCP Git write ownership; all fixtures remain synthetic.
 
 Harness accepted receipt `e093d3ad08f59376b22ce18c3c74b197fe85fb85` (and subsequent GOV pruning) retains unchanged canonical helper SHA-256 `427930c35888981bad777a3da9e7cc71023d145dc4fa8da8b3f0bc5caa99065d`. Tools portable contract at the published receipt has SHA-256 `9e343cc3293005106563f3eba812cf83928e7a0e6abbf64f4da73373a3a898b9`. Root approved the exact interface receipt, supported by independent native/pure assertions. The original published-contract wait is resolved; no live operator install is a readiness prerequisite.
 
 ## Steps
 
-- [ ] Resolve the exact published interface approval, retain immutable upstream receipts and freeze this Ready plan plus a singleton outcome batch (`completion_target: done`, root acceptance authority) before source.
-- [ ] Vendor the frozen portable contract and canonical helper under `src/generated/kb-search/`, record exact digests/receipts, and add a drift check. Only deterministic .ts-to-.js import adaptation is allowed. Add Node-compatible yaml as an explicit runtime parser dependency; no public package publication.
-- [ ] Add strict optional search binding configuration, canonical/legacy zone resolution and conflict refusal, and confined regular declaration reads. Preserve previous valid file readers/root allow-list; document deliberate migration and startup failures.
-- [ ] Add read-only main/search behavior and strict result schema. Validate registry/declaration/owner/mapping/generation/current-source boundaries, existing local mode-specific models, bounded typed HTTP protocol and local reconstruction. Never provision on reads.
-- [ ] Register kb_search through the existing annotation/access gate, use required kb enum and strict bounded schema, then install the narrow public SDK search audit wrapper with exact-once redacted outcomes and off respected.
-- [ ] Add isolated synthetic fixtures for hostile backend content/paths/docids, zones, registry/owner/declaration/generation/projection/current-source drift, changed nested/symlink boundaries, all unavailable/error paths, model and transport bounds, and strict public input/output. Exercise actual modern/legacy SDK dispatch validation/audit and compiled Node22 transport.
-- [ ] Update the capability inventory, user/developer guides and accepted behavior spec, including optional provisioning, read/cache distinction, URI/line authority, non-exhaustive results and explicit QUERY-owned fallback.
+- [x] Resolve the exact published interface approval, retain immutable upstream receipts and freeze this Ready plan plus a singleton outcome batch (`completion_target: done`, root acceptance authority) before source.
+- [x] Vendor the frozen portable contract and canonical helper under `src/generated/kb-search/`, record exact digests/receipts, and add a drift check. Only deterministic .ts-to-.js import adaptation is allowed. Add Node-compatible yaml as an explicit runtime parser dependency; no public package publication.
+- [x] Add strict optional search binding configuration, canonical/legacy zone resolution and conflict refusal, and confined regular declaration reads. Preserve previous valid file readers/root allow-list; document deliberate migration and startup failures.
+- [x] Add read-only main/search behavior and strict result schema. Validate registry/declaration/owner/mapping/generation/current-source boundaries, existing local mode-specific models, bounded typed HTTP protocol and local reconstruction. Never provision on reads.
+- [x] Register kb_search through the existing annotation/access gate, use required kb enum and strict bounded schema, then install the narrow public SDK search audit wrapper with exact-once redacted outcomes and off respected.
+- [x] Add isolated synthetic fixtures for hostile backend content/paths/docids, zones, registry/owner/declaration/generation/projection/current-source drift, changed nested/symlink boundaries, all unavailable/error paths, model and transport bounds, and strict public input/output. Exercise actual modern/legacy SDK dispatch validation/audit and compiled Node22 transport.
+- [x] Update the capability inventory, user/developer guides and accepted behavior spec, including optional provisioning, read/cache distinction, URI/line authority, non-exhaustive results and explicit QUERY-owned fallback.
 - [ ] Run all required gates sequentially in the coordinator-assigned heavy window; prepare the six-heading Review immediately before final Discussion, transition only this record to Awaiting review, commit intended paths and return the exact clean candidate. Root/independent reviewer owns approval, Done and prune.
 
 ## Files touched
 
 - `docs/roadmap/MCP-KBFS-TOOL-004-add-kb-search-tool.md`; `+/_BATCHES/MCP-KBFS-BATCH-001.md` (new authority envelope).
-- `src/generated/kb-search/contract.ts`, `source-mirrors.ts`, `receipt.json` (new pinned vendor payload); `src/main/search/vendor.test.ts` (drift evidence).
-- `src/config/index.ts`, `src/config/index.test.ts` (bindings, canonical/legacy zones, safe declaration).
+- `src/generated/kb-search/contract.ts`, `source-mirrors.ts`, `receipt.json` (new pinned vendor payload); `src/main/search/index.test.ts` (drift evidence).
+- `src/config/index.ts`, `src/config/search.test.ts` (bindings, canonical/legacy zones, safe declaration).
 - `src/main/search/index.ts`, `mapping.ts`, and co-located tests (new behavior and strict result schema).
 - `src/tools/kb/index.ts`, `src/tools/kb/index.test.ts` (registration/public schema); `src/utils/access-level.ts` (search-only callback exception).
-- `src/utils/search-audit.ts` and tests (new public dispatcher audit); `src/mcp-server/index.ts` (factory wiring).
-- `scripts/smoke.ts` (compiled modern/legacy synthetic search and validation/audit/error evidence).
+- `src/utils/audit-log.ts` (awaited sanitized search append outcome); `src/utils/search-audit.ts` and tests (new public dispatcher audit); `src/mcp-server/index.ts` (factory wiring).
+- `scripts/smoke.ts`, `scripts/search-smoke.ts` (compiled modern/legacy synthetic search and validation/audit/error evidence).
 - `package.json`, `bun.lock` (explicit Node YAML dependency).
-- `README.md`, `CLAUDE.md`, `docs/specs/kb-search.md`, `docs/specs/README.md`, `docs/guides/user/kb-search.md`, user/developer guide indexes, `scoping-a-knowledge-base.md`, `architecture.md` and `troubleshooting.md` (discoverability, behavior and migration).
+- `README.md`, `AGENTS.md`, `CHANGELOG.md`, `.ki.toml`, `docs/specs/kb-search.md`, `docs/specs/index.md`, `docs/guides/user/kb-search.md`, user/developer guide indexes, `scoping-a-knowledge-base.md`, `architecture.md` and `troubleshooting.md` (discoverability, behavior and migration).
 
 ## Verify
 
@@ -106,6 +106,12 @@ Document explicit bindings, canonical-zone migration, operator provisioning and 
 ### Roadmap
 
 One selected item and exact singleton outcome envelope; no dynamically admitted work or fleet migration.
+
+## Delivery evidence
+
+The source is implemented against the immutable Ready/batch baseline. Required gates pass: 346 tests and 100% statements/branches/functions/lines; tsc/build/Biome/Knip; compiled modern/legacy smoke; MCP, engineering, authoring, specs and roadmap audits. Runtime evidence is under `/tmp/mcp-roadmap-completion-20261005/mcp-kbfs-*-final.log`. Parent independently ran the public SDK fixture using minimum Node22.16.0 (120 assertions); the independent reviewer expanded its fixture to 149 assertions. Exact terminal review binds the forthcoming clean packet commit.
+
+Independent review identified and fixed a fresh canonical-zone revocation gap. The adapter now resolves current zones from the exact declaration snapshot and compares current, mapping and startup authority before and after retrieval; reblessed digest changes cannot retain revoked folder access. Required local lexical/physical/protected note-path filters are applied alongside unchanged pinned vendor guards. No private KB/store or global binding was read or changed.
 
 ## Discussion
 

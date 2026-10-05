@@ -1,0 +1,16 @@
+{
+  "schema": "ki/kb-search-vendor/v1",
+  "repository": "https://github.com/knowledgeislands/tools-ki",
+  "commit": "d6222b752d5f5ee3ef36c7bac55eec3f67629c87",
+  "adaptation": "Exact import suffix .ts to .js only",
+  "files": {
+    "contract.ts": {
+      "source_sha256": "9e343cc3293005106563f3eba812cf83928e7a0e6abbf64f4da73373a3a898b9",
+      "vendored_sha256": "2f172c1532667b7fa6f5fe6877ba3abb3cbb04ff392c7bafc654bd297c7ff6c6"
+    },
+    "source-mirrors.ts": {
+      "source_sha256": "427930c35888981bad777a3da9e7cc71023d145dc4fa8da8b3f0bc5caa99065d",
+      "vendored_sha256": "427930c35888981bad777a3da9e7cc71023d145dc4fa8da8b3f0bc5caa99065d"
+    }
+  }
+}

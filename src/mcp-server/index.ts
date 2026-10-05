@@ -22,6 +22,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio'
 import { KNOWLEDGE_BASES_ENV_VAR, loadConfig } from '../config/index.js'
 import { registerConfigTools, registerKbTools } from '../tools/index.js'
 import { makeAccessGatedRegister } from '../utils/access-level.js'
+import { installSearchAudit } from '../utils/search-audit.js'
 
 const config = loadConfig()
 
@@ -45,6 +46,17 @@ const createServer = (): McpServer => {
     name: 'mcp-ki-kb-fs',
     version: '0.9.0'
   })
+
+  installSearchAudit(
+    server,
+    {
+      mode: config.auditLogMode,
+      path: config.auditLogPath,
+      maxBytes: config.auditLogMaxBytes,
+      keep: config.auditLogKeep
+    },
+    [...config.knowledgeBases.keys()]
+  )
 
   // Monkey-patch registerTool so every tool's callback is wrapped with the
   // audit logger. Done in-place rather than passing a wrapped reference because

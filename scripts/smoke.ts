@@ -31,6 +31,7 @@ const EXPECTED_TOOLS = [
   'kb_list',
   'kb_read',
   'kb_rename',
+  'kb_search',
   'kb_write'
 ] as const
 
@@ -55,6 +56,8 @@ const createTransport = (declaration: Record<string, string>): StdioClientTransp
     env: {
       ...(process.env as Record<string, string>),
       MCP_KI_KB_FS_ACCESS_LEVEL: 'destructive',
+      MCP_KI_KB_FS_AUDIT_LOG: 'off',
+      MCP_KI_KB_FS_SEARCH_BINDINGS: '{}',
       MCP_KI_KB_FS_KNOWLEDGE_BASES: JSON.stringify(declaration)
     }
   })

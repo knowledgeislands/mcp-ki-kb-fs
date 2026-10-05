@@ -79,3 +79,9 @@ Both the environment and every declared base's `.ki.toml` are read once, at star
 ## Something else
 
 If the behaviour you are seeing is not covered here and is not obviously one of these safeguards, open an issue with the tool name, the arguments, and the error text. For a security concern, do not open a public issue: email `kris@kris.me.uk` with the impact, reproduction steps, package version, and Node version, using the subject `mcp-kb-fs security`. The root `SECURITY.md` remains the repository-wide reporting policy.
+
+## Search unavailable or audit unavailable
+
+Search requires an explicit binding, current canonical declaration/source proofs, owner-generated private state, already provisioned local models for the selected mode and an assigned loopback daemon. It refuses stale or foreign state before exposing snippets. Reads never install/download, refresh an index or start a daemon. Ask the operator to inspect the [search binding and recovery procedure](kb-search.md), then use literal grep and targeted reads through QUERY if needed.
+
+An enabled audit append failure reports a sanitized audit-unavailable error. Restore the operator-configured audit destination; the server cannot promise a physical event while storage is unavailable. Other tools retain their existing audit policy.

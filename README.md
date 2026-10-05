@@ -12,16 +12,18 @@ An MCP (Model Context Protocol) server that gives a model read and write access 
 - **Zone scoping** — only content under a base's declared Knowledge Islands zones and staging areas is reachable. The base's root is neither listable nor writable.
 - **Protected paths** — dotfiles and dot-directories at any depth, and root-level repository-meta names, stay hidden from ordinary tools. A separate exact allow-list permits read-only access to selected repository-context files.
 - **One content surface** — the same read, list, write, rename, and delete tools handle Markdown notes and side files alike; Markdown frontmatter and body selection remains `.md`-only.
-- **Audited** — `write` and `destructive` calls are recorded as local JSONL by default, with content replaced by a byte count and URL credentials redacted.
+- **Optional search** — explicitly bound per-KB indexes provide lexical, vector and hybrid retrieval with current local citations; reads never install models or refresh indexes.
+- **Audited** — writes and search outcomes are recorded as local JSONL by default; search logs exclude query text, results and document paths.
 
 ## Available Tools
 
-Seven tools, gated by `MCP_KI_KB_FS_ACCESS_LEVEL`. The levels nest, and each tool's level is derived from its MCP annotations rather than its name.
+Eight tools, gated by `MCP_KI_KB_FS_ACCESS_LEVEL`. The levels nest, and each tool's level is derived from its MCP annotations rather than its name.
 
 | Tool               | Level         | Purpose                                              |
 | ------------------ | ------------- | ---------------------------------------------------- |
 | `kb_config`        | `read`        | Return resolved zones, the allow-list, and the base roster. |
 | `kb_list`          | `read`        | List files, folders, or Markdown notes. †            |
+| `kb_search`      | `read`        | Retrieve bounded local snippets from a prepared index. |
 | `kb_read`          | `read`        | Read text, binary, or a Markdown slice. ‡            |
 | `kb_rename`        | `write`       | Rename or move a file. Refuses to overwrite. §       |
 | `kb_folder_create` | `write`       | Create a folder. Idempotent, no preview mode.        |
@@ -37,7 +39,7 @@ Each tool's arguments, defaults, enums, and descriptions are published by the ru
 1. `bun install`
 2. `bun run build`
 3. Declare your knowledge bases in `MCP_KI_KB_FS_KNOWLEDGE_BASES` and point your client at `dist/mcp-server/index.js` — [`claude-config-sample.json`](./claude-config-sample.json) is a working example.
-4. Restart the client. Three read-only tools should appear.
+4. Restart the client. Four read-only tools should appear; optional search returns unavailable until explicitly provisioned.
 
 [Installing the server](./docs/guides/user/installing-the-server.md) covers each step properly, including every environment variable and its default.
 
@@ -57,7 +59,9 @@ Each tool's arguments, defaults, enums, and descriptions are published by the ru
 
 The declaration is the authorisation boundary. `MCP_KI_KB_FS_KNOWLEDGE_BASES` is resolved at startup into one closed bundle per alias — root, zone map, and root-file allow-list travelling together — and a path that is not a directory that exists aborts the server. A base that is not declared is unreachable, and no tool argument anywhere in the surface accepts a filesystem location, so no prompt can introduce one.
 
-Beneath that, every path crosses four checks in order: argument validation refuses `..`, leading `/`, leading `~`, and null bytes; `resolveWithinRoot` asserts lexical containment; `assertRealPathWithinRoot` realpaths both ends to catch symlink escapes; and zone scoping plus the protected-path filter decide what policy allows. One call acts in exactly one base — there are no cross-base operations — and `kb_config` returns aliases and folder names but never a filesystem path.
+For ordinary file tools, each content path crosses four checks in order: argument validation refuses `..`, leading `/`, leading `~`, and null bytes; `resolveWithinRoot` asserts lexical containment; `assertRealPathWithinRoot` realpaths both ends to catch symlink escapes; and zone scoping plus the protected-path filter decide what policy allows. One call acts in exactly one base — there are no cross-base operations — and `kb_config` returns aliases and folder names but never a filesystem path.
+
+Optional search validates explicitly bound owner-generated state and current canonical note proofs before and after retrieval, invoking local note containment/protected-path checks and reconstructing citations locally; its [contract](docs/specs/kb-search.md) describes the separate state/model ownership and audit boundaries.
 
 The tool-visibility gate sits above all of it: an unannotated or partly annotated tool is treated as destructive, so forgetting to annotate a new tool hides it at the default level rather than exposing it.
 

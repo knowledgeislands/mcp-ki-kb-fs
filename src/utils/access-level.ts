@@ -51,7 +51,12 @@ export const makeAccessGatedRegister = (
       const [name, config, callback] = args
       const level = levelFromAnnotations(config.annotations)
       if (ACCESS_LEVEL_RANK[level] > ACCESS_LEVEL_RANK[accessLevel]) return undefined as never
-      const wrappedArgs: RegisterToolArgs = [name, config, withAuditLog(audit, name, level, callback)]
+      // Search is audited once at public SDK dispatch, including validation before callbacks.
+      const wrappedArgs: RegisterToolArgs = [
+        name,
+        config,
+        name === 'kb_search' ? callback : withAuditLog(audit, name, level, callback)
+      ]
       return Reflect.apply(target, thisArg, wrappedArgs)
     }
   })

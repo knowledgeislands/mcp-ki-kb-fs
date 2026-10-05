@@ -73,9 +73,9 @@ A tool registers when its derived level is at or below `cfg.accessLevel` (from `
 
 ## Security Requirements
 
-This server reads and writes files anywhere under any declared knowledge-base root. New tools and changes to existing tools MUST preserve every invariant below.
+This server reads and writes authorized content under declared knowledge-base roots. Optional search also reads explicitly bound owner-generated state and provisioned model metadata under its separate ownership contract. New tools and changes to existing tools MUST preserve every invariant below.
 
-1. **Two-layer path containment, every call site.** Before any `fs.*` call, run user input through **both** `resolveWithinRoot()` (lexical guard — rejects `..`, absolute-style inputs, Windows separators) AND `assertRealPathWithinRoot()` (realpath guard — rejects symlink escapes). For new-file writes the realpath guard checks the deepest existing ancestor. Both live in [src/utils/utils.ts](./src/utils/utils.ts).
+1. **Two-layer path containment, every call site.** For canonical KB content, run caller-relative paths through **both** `resolveWithinRoot()` (lexical guard — rejects `..`, absolute-style inputs, Windows separators) AND `assertRealPathWithinRoot()` (realpath guard — rejects symlink escapes). For new-file writes the realpath guard checks the deepest existing ancestor. Both live in [src/utils/utils.ts](./src/utils/utils.ts).
 2. **Protected paths are non-negotiable.** Every read/write/list handler calls `isProtectedPath()` ([src/utils/protected.ts](./src/utils/protected.ts)). Dotfiles/dotdirs at any depth and root-level repo-meta names (README, CLAUDE, LICENSE, CHANGELOG, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, AGENTS — with optional `.md`/`.txt`) must remain unreachable. New FS-touching tools must call this filter.
 3. **File-type discipline.** Note tools only accept `.md` paths and reject directories. New tools that walk the tree must filter by intended type, not return arbitrary files.
 4. **Destructive tools require `dry_run` default `true`.** `kb_note_write` defaults to a `[dry_run] would create/overwrite (N bytes)` preview; only mutates when `dry_run: false` is explicit. New `DESTRUCTIVE`-annotated tools must follow this.
@@ -84,17 +84,19 @@ This server reads and writes files anywhere under any declared knowledge-base ro
 7. **Error messages must not leak the absolute root.** Surface what the caller asked for via `path.relative(base.rootPath, ...)`. The same rule applies to results: `kb_config` reports aliases and zone names, never paths.
 8. **Cross-base containment is the new failure mode.** With one root, a traversal bug escaped into unaddressable territory; with several roots in one process it can land _inside a sibling declared base_ — a confidentiality boundary, since declared bases span personal, legal and client material. `resolveWithinRoot`, `assertRealPathWithinRoot` and `isInScope` already take the root/zones per call, so the risk is never in the helpers: it is in the wiring, passing one base's root with another base's path. Any change to that wiring must keep [src/main/files/cross-base.test.ts](./src/main/files/cross-base.test.ts) passing — it declares two bases as siblings on disk and asserts no input shape, including symlinks, crosses from one into the other.
 
+Search uses the same local lexical/physical/protected note-path filters alongside frozen mapping/current-source guards and verifies ownership for derived state. It never opens source stores or provisions runtime assets on reads; see [the search contract](docs/specs/kb-search.md).
+
 Traversal- and symlink-rejection tests live in [src/main/notes/index.test.ts](./src/main/notes/index.test.ts); their cross-base equivalents in [src/main/files/cross-base.test.ts](./src/main/files/cross-base.test.ts).
 
 ## Tool registration call sites
 
-Tools are registered in [src/tools/config/index.ts](./src/tools/config/index.ts) (`kb_config`) and [src/tools/kb/index.ts](./src/tools/kb/index.ts) (the other six). To survey the surface, `grep "registerTool" src/tools/*/index.ts`. README's [Available Tools](./README.md#available-tools) tabulates them with purposes.
+Tools are registered in [src/tools/config/index.ts](./src/tools/config/index.ts) (`kb_config`) and [src/tools/kb/index.ts](./src/tools/kb/index.ts) (the other seven). To survey the surface, `grep "registerTool" src/tools/*/index.ts`. README's [Available Tools](./README.md#available-tools) tabulates them with purposes.
 
 Within each group file, `server.registerTool(...)` calls are kept in ascending alphabetical order by tool name — the `ki-mcp` TOOL-1 check enforces it.
 
 ## Result envelopes and `outputSchema`
 
-The layer boundary is strict: `src/main/` returns **plain data** and signals failure by **throwing**. Only `src/tools/` knows the MCP wire format, via `jsonResult` / `errorResult` in [src/utils/results.ts](./src/utils/results.ts). Every tool handler must wrap its `main/` call in try/catch and return `errorResult(<action>, err)` — never let a throw escape, since a thrown error becomes a protocol error and bypasses the audit-log wrapper.
+The layer boundary is strict: `src/main/` returns **plain data** and signals failure by **throwing**. Only `src/tools/` knows the MCP wire format, via `jsonResult` / `errorResult` in [src/utils/results.ts](./src/utils/results.ts). Every tool handler must wrap its `main/` call in try/catch and return `errorResult(<action>, err)` — never let a throw escape from the thin adapter. Ordinary tools retain callback auditing; search alone uses the public SDK dispatch wrapper to cover recognizable validation/output failures exactly once, and enabled append failure refuses unaudited success.
 
 The `kb_config` result carries the selected base's detail plus a `knowledgeBases` roster of every declared alias with its zone names — so a client can discover the install's reach in one read-only call, without any path being disclosed.
 

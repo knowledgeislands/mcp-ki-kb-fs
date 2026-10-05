@@ -6,7 +6,7 @@ The declaration decides which knowledge bases this install can reach. The access
 
 `MCP_KI_KB_FS_ACCESS_LEVEL` takes one of three values, and they nest — each includes everything below it.
 
-**`read`** is the default. Three tools are registered: `kb_config`, `kb_list`, and `kb_read`. Nothing on disk can change.
+**`read`** is the default. Four tools are registered: `kb_config`, `kb_list`, `kb_read`, and optional `kb_search`. Canonical KB content cannot change; a provisioned search daemon may maintain disposable retrieval caches.
 
 **`write`** adds two non-destructive mutations: `kb_rename` and `kb_folder_create`. Neither can destroy existing content — renaming refuses to overwrite an existing destination, and creating a folder that already exists simply succeeds.
 
@@ -48,7 +48,7 @@ An unrecognised value aborts startup rather than falling back to `read`, so a ty
 
 `MCP_KI_KB_FS_AUDIT_LOG` decides what is recorded as JSONL, one line per invocation:
 
-- **`writes`** (the default) records calls whose derived level is `write` or `destructive`. On a default `read` install that means it records nothing and the file is never created, which is the usual reason someone finds it missing.
+- **`writes`** (the default) records calls whose derived level is `write` or `destructive`. It also records recognizable search successes and failures, including SDK tool validation, even at the default read level. Other reads retain their previous policy.
 - **`all`** adds reads.
 - **`off`** disables it entirely; the wrapper short-circuits and never opens the file.
 
@@ -58,4 +58,6 @@ Three things are true of those arguments, and the first two matter if you are de
 
 The file lives at `~/.local/state/mcp-ki-kb-fs/audit.jsonl` unless `MCP_KI_KB_FS_AUDIT_LOG_PATH` says otherwise, and is chmod-ed to owner-only. It rotates once it passes `MCP_KI_KB_FS_AUDIT_LOG_MAX_BYTES` (10 MiB by default; `0` disables rotation), keeping `MCP_KI_KB_FS_AUDIT_LOG_KEEP` rotations (five by default).
 
-A failure to write the log is swallowed to stderr on purpose: a broken log must never stop a tool call from completing. That is the right trade for a local convenience record, and the wrong one for a compliance control — so if you need the log to be authoritative, watch the file rather than assume its silence means nothing happened.
+Search logs whitelist configured alias, validated mode, outcome and query type/UTF-8 byte count; they exclude raw queries, results and document paths. Enabled search append failure returns a sanitized audit-unavailable error instead of unaudited success. Unrecognizable or codec-rejected envelopes before the public SDK handler cannot be promised an event; see [search auditing](../../specs/kb-search.md).
+
+For ordinary tools, failure to write the log is swallowed to stderr: a broken log must never stop a tool call from completing. That is the right trade for a local convenience record, and the wrong one for a compliance control — so if you need the log to be authoritative, watch the file rather than assume its silence means nothing happened.

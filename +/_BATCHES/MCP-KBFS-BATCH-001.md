@@ -13,3 +13,7 @@ policy: safe-local-v1
 ---
 
 # MCP-KBFS-BATCH-001
+
+## Run ledger
+
+<!-- ki-batch-run: MCP-KBFS-BATCH-001-RUN-001 aee62ab625dc17c07084b1cac458f9729fb0b354146bf93a5b915a5f6971412c -->

@@ -8,8 +8,8 @@
  * from the caller-supplied `AuditConfig` slice of Config — this util reads no
  * env and holds no config singleton.
  *
- * Failures to write the audit line are swallowed (stderr only) — a broken log
- * must never prevent a tool call from completing.
+ * Ordinary audit append failures retain their stderr-only behavior. Search uses
+ * the awaited boolean append result and refuses to report unaudited success.
  */
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -83,7 +83,7 @@ let chmodEnsured = false
  * `fs.rename`. Best-effort: any failure logs to stderr and leaves the file in
  * place so the next append still succeeds.
  */
-const rotateIfNeeded = async (audit: AuditConfig): Promise<void> => {
+const rotateIfNeeded = async (audit: AuditConfig, privateError = false): Promise<void> => {
   if (audit.maxBytes === 0) return
   let size: number
   try {
@@ -108,11 +108,13 @@ const rotateIfNeeded = async (audit: AuditConfig): Promise<void> => {
       await fs.rm(audit.path, { force: true })
     }
   } catch (err) {
-    console.error(`[audit-log] rotation failed: ${errMessage(err)}`)
+    console.error(
+      privateError ? '[audit-log] search rotation failed' : `[audit-log] rotation failed: ${errMessage(err)}`
+    )
   }
 }
 
-const writeAuditEvent = async (audit: AuditConfig, event: AuditEvent): Promise<void> => {
+const writeAuditEvent = async (audit: AuditConfig, event: AuditEvent, privateError = false): Promise<boolean> => {
   try {
     await fs.mkdir(path.dirname(audit.path), { recursive: true })
     await fs.appendFile(audit.path, `${JSON.stringify(event)}\n`, { encoding: 'utf-8', mode: 0o600 })
@@ -124,9 +126,13 @@ const writeAuditEvent = async (audit: AuditConfig, event: AuditEvent): Promise<v
       }
       chmodEnsured = true
     }
-    await rotateIfNeeded(audit)
+    await rotateIfNeeded(audit, privateError)
+    return true
   } catch (err) {
-    console.error(`[audit-log] failed to write: ${errMessage(err)}`)
+    console.error(
+      privateError ? '[audit-log] search audit unavailable' : `[audit-log] failed to write: ${errMessage(err)}`
+    )
+    return false
   }
 }
 
@@ -137,8 +143,19 @@ const writeAuditEvent = async (audit: AuditConfig, event: AuditEvent): Promise<v
 let auditQueue: Promise<void> = Promise.resolve()
 
 export const appendAuditEvent = (audit: AuditConfig, event: AuditEvent): Promise<void> => {
-  auditQueue = auditQueue.then(() => writeAuditEvent(audit, event))
+  auditQueue = auditQueue.then(async () => {
+    await writeAuditEvent(audit, event)
+  })
   return auditQueue
+}
+
+/** Search cannot report unaudited success when enabled storage is unavailable. */
+export const appendSearchAuditEvent = (audit: AuditConfig, event: AuditEvent): Promise<boolean> => {
+  let appended = false
+  auditQueue = auditQueue.then(async () => {
+    appended = await writeAuditEvent(audit, event, true)
+  })
+  return auditQueue.then(() => appended)
 }
 
 type ToolCallback = (...callbackArgs: unknown[]) => unknown | Promise<unknown>

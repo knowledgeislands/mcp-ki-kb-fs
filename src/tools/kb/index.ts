@@ -1,8 +1,10 @@
 import type { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
 import { type Config, selectKnowledgeBase } from '../../config/index.js'
+import { safePath, validateRequest, ZONES } from '../../generated/kb-search/contract.js'
 import * as files from '../../main/files/index.js'
 import * as notes from '../../main/notes/index.js'
+import { searchKb, searchResultSchema } from '../../main/search/index.js'
 import { DESTRUCTIVE, READ_ONLY, WRITE, WRITE_IDEMPOTENT } from '../../utils/annotations.js'
 import { errorResult, jsonResult } from '../../utils/results.js'
 import { kbArg } from '../shared.js'
@@ -163,6 +165,41 @@ The exception neither lists the root nor permits writes.`,
         return jsonResult(await files.renameFile(selectKnowledgeBase(cfg, kb), args))
       } catch (err) {
         return errorResult('renaming file', err)
+      }
+    }
+  )
+
+  server.registerTool(
+    'kb_search',
+    {
+      title: 'Search KB Notes',
+      description:
+        'Bounded optional source-authenticated search of one explicitly bound KB. Returns local snippets and repository line ranges; unavailable search is an error. Never installs models or creates/refreshes indexes or starts a daemon. The operator daemon may maintain disposable derived caches.',
+      inputSchema: z
+        .object({
+          kb: kbArg(cfg),
+          query: z.string().min(1).max(1024),
+          zone: z.enum(ZONES).optional(),
+          path_prefix: z.string().refine(safePath).optional(),
+          mode: z.enum(['query', 'search', 'vsearch']).default('query'),
+          limit: z.number().int().min(1).max(50).default(5)
+        })
+        .strict()
+        .superRefine((value, ctx) => {
+          try {
+            validateRequest({ ...value, pathPrefix: value.path_prefix })
+          } catch {
+            ctx.addIssue({ code: 'custom', message: 'Invalid bounded search request.' })
+          }
+        }),
+      outputSchema: searchResultSchema,
+      annotations: READ_ONLY
+    },
+    async ({ kb, path_prefix, ...args }) => {
+      try {
+        return jsonResult(await searchKb(selectKnowledgeBase(cfg, kb), { ...args, pathPrefix: path_prefix }))
+      } catch (err) {
+        return errorResult('searching KB', err)
       }
     }
   )

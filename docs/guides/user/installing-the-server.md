@@ -59,7 +59,7 @@ Then restart the client. Both the environment and each base's `.ki.toml` are rea
 
 ## Confirm it works
 
-Ask the client to list its tools. On a default install you should see three, all read-only: `kb_config`, `kb_list`, and `kb_read`. If you see five or seven, the access level is not at its default — see [Choosing an access level](choosing-an-access-level.md). If you see none, see [Troubleshooting](troubleshooting.md).
+Ask the client to list its tools. On a default install you should see four, all read-only: `kb_config`, `kb_list`, `kb_read`, and `kb_search`. Optional search needs [explicitly provisioned state](kb-search.md). If you see six or eight, the access level is not at its default — see [Choosing an access level](choosing-an-access-level.md). If you see none, see [Troubleshooting](troubleshooting.md).
 
 Then ask for something real: _call `kb_config` for `kit-pkb` and tell me which zones it has_. A first answer naming the top-level folders you recognise confirms the whole path — client launch, declaration parsing, startup validation, and `.ki.toml` resolution. [Reading and writing notes](reading-and-writing-notes.md) takes it from there.
 

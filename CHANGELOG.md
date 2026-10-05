@@ -8,3 +8,7 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Note read, write, add, and delete within a scoped base.
 - Folder creation, rename, and deletion.
 - Read, write, list, and delete across a declared base, gated by access level.
+
+### Added
+
+- Optional `kb_search` with explicit per-KB registry binding, canonical custom zones, current local citations, strict bounded retrieval and privacy-preserving search audits in modern/legacy sessions. Reads never provision models, indexes or daemons.

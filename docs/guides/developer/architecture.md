@@ -8,13 +8,13 @@ Dependencies point strictly downwards. Nothing in `src/main/` imports from `src/
 
 **`src/mcp-server/index.ts` — the entry point.** It calls `loadConfig()` once at module scope, reports the resolved configuration to stderr, installs the access gate, and hands a server factory to `serveStdio`. It is the only file that reads the environment or writes to stderr.
 
-**`src/tools/` — the wire surface.** One registration module per group (`kb/` for the six knowledge-base tools, `config/` for `kb_config`), aggregated by `src/tools/index.ts`. A registration declares a title, a description, an input schema, an output schema, and annotations, then calls into `src/main/` and wraps the result. `src/tools/shared.ts` holds `kbArg(cfg)`, the one argument every tool has in common, defined once so a second definition cannot drift into accepting an alias the declaration never authorised.
+**`src/tools/` — the wire surface.** One registration module per group (`kb/` for the seven knowledge-base tools, `config/` for `kb_config`), aggregated by `src/tools/index.ts`. A registration declares a title, a description, an input schema, an output schema, and annotations, then calls into `src/main/` and wraps the result. `src/tools/shared.ts` holds `kbArg(cfg)`, the one argument every tool has in common, defined once so a second definition cannot drift into accepting an alias the declaration never authorised.
 
 **`src/main/` — the behaviour.** `files/` and `notes/` hold the filesystem work; `config/` builds the orientation payload. These functions take an already-selected `KnowledgeBase` as their first argument, return plain data, and throw plain `Error`s. They know nothing about MCP.
 
 **`src/utils/` — cross-cutting mechanics.** Path containment (`utils.ts`), protected paths (`protected.ts`), zone scoping (`zones.ts`), the access gate (`access-level.ts`), the audit wrapper (`audit-log.ts`), the result envelope (`results.ts`), and the annotation presets (`annotations.ts`).
 
-`src/config/index.ts` sits beside these as the definition of `Config`, `KnowledgeBase`, and the loader that validates both. `src/generated/` holds an mcporter-emitted typed client and is excluded from linting, coverage, and knip.
+`src/config/index.ts` sits beside these as the definition of `Config`, `KnowledgeBase`, and the loader that validates both. `src/generated/` holds the mcporter client and the pinned portable search contract/helper. Generated payloads are excluded from linting, coverage and knip; search vendor receipts and normalized-byte drift tests pin the exact upstream sources.
 
 ## Configuration is injected, not ambient
 
@@ -79,3 +79,9 @@ Be honest with the annotations. They are not documentation — they decide regis
 ## A note on the current surface
 
 `src/main/notes/` exports Markdown-specific variants — note reading, listing, renaming, deleting, and writing — of which only `createFolder` is registered; the rest, and `files.listFiles`, are exercised by tests alone. The registered surface routes everything else through `src/main/files/`. Treat the unregistered exports as material awaiting a decision rather than as the live path, and check `src/tools/kb/index.ts` for what a given tool actually calls.
+
+## Optional derived search
+
+`main/search` receives one selected KnowledgeBase and injectable fetch. It validates owner-generated registry/mapping/config/projection and current canonical source proofs before and after typed HTTP retrieval, then reconstructs all snippets and citations locally. Search rechecks current authority on every call, while startup-resolved ordinary readers preserve their existing behavior. The strict main request schema uses camelCase `pathPrefix`; the thin public adapter uses house snake_case `path_prefix`.
+
+The [search specification](../../specs/kb-search.md) owns unavailable states, model/cache constraints and the public-dispatch audit boundary. Additions must preserve no provisioning on reads and search audit privacy under both protocol eras. `scripts/search-smoke.ts` boots compiled Node against a controlled synthetic daemon, and pure/main fixtures exercise drift, stale/foreign candidates and exact source receipts. No test reads a private KB or source store.
