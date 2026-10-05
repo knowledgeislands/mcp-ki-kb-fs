@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-05T07:44:29Z
+updated_at: 2026-10-05T12:11:03Z
 ---
 
 # Add kb_search tool
@@ -30,7 +30,7 @@ In scope: a `kb_search` tool taking a base alias, query text, optional zone or p
 
 The search tool needs the pilot evidence and authoritative trust-boundary mapping described in [the index work](../../../tools-ki/docs/roadmap/KI-TOOL-CLI-091-add-kb-search-index.md). That record is currently Waiting for because the registry has no trust-boundary field and the qmd pilot has not supplied the configuration and failure contract. A Knowledge Base alias, checkout path, or Agora membership must not be used to guess the boundary.
 
-Return this item to Next when the qmd pilot in [the harness search proposal](../../../ki-agentic-harness/docs/roadmap/KI-HARNESS-FND-028-adopt-qmd-kb-search.md) is recorded and the index owner publishes a concrete mapping and daemon request/response contract. Confirm how query/search/vsearch modes, collection restrictions, unavailable indexes, daemon errors, and source-store mirror labels are represented. [The mirror-content proposal](../../../ki-agentic-harness/docs/roadmap/KI-HARNESS-GOV-121-require-substantive-store-mirrors.md) is also still Triage; its metadata contract must be agreed before the tool can implement the promised labels.
+Return this item to Next when the qmd pilot in [the delivered search adoption decision](../../../ki-agentic-harness/docs/decisions/ADR-KI-HARNESS-TOOLCHAIN-006-qmd-derived-kb-search-index.md) is recorded and the index owner publishes a concrete mapping and daemon request/response contract. Confirm how query/search/vsearch modes, collection restrictions, unavailable indexes, daemon errors, and source-store mirror labels are represented. [The delivered mirror-content standard](../../../ki-agentic-harness/skills/repo-structure/ki-repo-kb/references/standards-source-mirrors.md) is also still Triage; its metadata contract must be agreed before the tool can implement the promised labels.
 
 The implementation plan must prove that an untrusted daemon result cannot leak a snippet, title, docid, or other content from a different base, protected path, symlink escape, or undeclared zone. Validate scope before exposing any returned content, and keep index creation and daemon installation with their existing owners. These are external conditions, not local `blocked_by` edges.
 
