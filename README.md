@@ -1,4 +1,4 @@
-# mcp-kb-fs
+# mcp-ki-kb-fs
 
 [![CI](https://github.com/knowledgeislands/mcp-ki-kb-fs/actions/workflows/ci.yml/badge.svg)](https://github.com/knowledgeislands/mcp-ki-kb-fs/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 

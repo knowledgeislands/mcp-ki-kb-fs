@@ -108,7 +108,7 @@ const main = async (): Promise<void> => {
   // `versionNegotiation: { mode: 'auto' }` opens with `server/discover`, so this
   // client exercises the modern path the SDK now owns.
   const client = new Client(
-    { name: 'mcp-kb-fs-smoke', version: '0.0.0' },
+    { name: 'mcp-ki-kb-fs-smoke', version: '0.0.0' },
     { capabilities: {}, versionNegotiation: { mode: 'auto' } }
   )
 
@@ -147,7 +147,7 @@ const main = async (): Promise<void> => {
     // `initialize` handshake is still served, from the same factory, with the
     // identical surface. Remove this assertion only when the fallback is
     // removed on purpose.
-    const legacyClient = new Client({ name: 'mcp-kb-fs-legacy-smoke', version: '0.0.0' }, { capabilities: {} })
+    const legacyClient = new Client({ name: 'mcp-ki-kb-fs-legacy-smoke', version: '0.0.0' }, { capabilities: {} })
     await legacyClient.connect(createTransport(declaration))
     try {
       if (legacyClient.getProtocolEra() !== 'legacy') {

@@ -26,7 +26,7 @@ describe('repository root-file contract', () => {
     const agents = await readFile(base, { path: 'AGENTS.md' })
     const claude = await readFile(base, { path: 'CLAUDE.md' })
 
-    expect(readme.content).toContain('# mcp-kb-fs')
+    expect(readme.content).toContain('# mcp-ki-kb-fs')
     expect(agents.content).toContain('# AGENTS.md')
     expect(claude.content).toContain('@AGENTS.md')
   })
