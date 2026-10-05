@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-05T07:36:16Z
+updated_at: 2026-10-05T07:44:29Z
 ---
 
 # Add kb_search tool
@@ -44,7 +44,9 @@ Before leaving Waiting for, re-read the upstream records and their named durable
 
 ## Current delivery stop
 
-The 2026-10-05 delivery review re-read the upstream canonical records: `KI-TOOL-CLI-091` remains Waiting for / draft (`updated_at: 2026-09-30T15:18:21Z`); `KI-HARNESS-FND-028` and `KI-HARNESS-GOV-121` remain Triage / draft (`updated_at: 2026-09-30T07:00:00Z`). The qmd pilot is still described as a first task, not evidenced as completed. No accepted registry trust-boundary assignment or mirror-label contract is present. General authority to finish MCP items cannot manufacture these inputs or authorise searching real upstream KB content.
+The 2026-10-05 delivery review re-read the upstream canonical records: `KI-TOOL-CLI-091` remains Waiting for / draft (`updated_at: 2026-09-30T15:18:21Z`); `KI-HARNESS-FND-028` and `KI-HARNESS-GOV-121` remain Triage / draft (`updated_at: 2026-09-30T07:00:00Z`). The qmd pilot is still described as a first task, not evidenced as completed. No accepted registry trust-boundary assignment or mirror-label contract is present. The completion directive permits necessary dependency investigation, but it cannot substitute for missing pilot evidence or an accepted security-scope assignment.
+
+Read-only tooling checks also found no `qmd` executable on PATH and no installed `ki kb` subcommand; the tools-ki source contains no qmd or trust-boundary/index implementation. These are unfinished upstream setup and delivery tasks, not merely stale lifecycle labels. A pinned local qmd installation and manually isolated pilot configuration are feasible next dependency work, while authoritative registry trust-boundary assignment remains an owner decision.
 
 Upstream work required: complete and record the direct-CLI pilot and its quality/context/failure results in `KI-HARNESS-FND-028`; settle the authoritative trust-boundary field and registry-derived index/daemon contract through `KI-TOOL-CLI-091`; settle source-store mirror labels through `KI-HARNESS-GOV-121`. Then shape this tool against those contracts, including hostile-daemon fixtures proving no cross-base or protected-content disclosure. Keep Waiting for / draft. Fresh selector and roadmap audits pass; this is a verified external delivery stop, not a test failure or completed search implementation.
 
