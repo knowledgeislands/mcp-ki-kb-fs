@@ -57,8 +57,9 @@ export const searchResultSchema = z
             line_start: z.number().int().positive(),
             line_end: z.number().int().positive(),
             mirror_content: z.enum(['extract', 'pointer', 'unknown']).nullable(),
-            source_path: z.string().nullable(),
-            source_sha256: z
+            mirrors: z.string().nullable(),
+            mirror_type: z.enum(['verbatim', 'annotated', 'summarised', 'indexed']).nullable(),
+            mirror_sha256: z
               .string()
               .regex(/^[0-9a-fA-F]{64}$/)
               .nullable()

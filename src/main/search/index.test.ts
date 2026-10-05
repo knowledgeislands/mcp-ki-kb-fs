@@ -55,7 +55,7 @@ const fixture = () => {
   writeFileSync(join(kb, '.ki.toml'), declaration)
   mkdirSync(join(kb, 'Knowledge'))
   const path = 'Knowledge/Mixed Case Note.md',
-    text = `---\nsource_path: Records/Alpha.pdf\nsource_sha256: "${'a'.repeat(64)}"\n---\n# Real local title\n\nA local restoration answer belongs to Alpha. ${'durable fact '.repeat(30)}\n`
+    text = `---\nmirrors: alpha-sources/Records/Alpha.pdf\nmirror_type: summarised\nmirror_sha256: "${'a'.repeat(64)}"\n---\n# Real local title\n\nA local restoration answer belongs to Alpha. ${'durable fact '.repeat(30)}\n`
   writeFileSync(join(kb, path), text)
   const key = `documents/${sha256(path)}.md`
   writeFileSync(join(projection, key), text)
@@ -139,8 +139,8 @@ describe('source-authenticated optional search', () => {
       path: f.path,
       title: 'Real local title',
       mirror_content: 'extract',
-      line_start: 7,
-      source_path: 'Records/Alpha.pdf'
+      line_start: 8,
+      mirrors: 'alpha-sources/Records/Alpha.pdf'
     })
     expect(JSON.stringify(result)).not.toMatch(/HOSTILE|FOREIGN/)
     expect(result.results[0]?.snippet).toContain('local restoration')
@@ -453,12 +453,12 @@ describe('source-authenticated optional search', () => {
 it('vendored source has exact pinned upstream digests with only the declared import adaptation', () => {
   const directory = join(import.meta.dirname, '../../generated/kb-search')
   const receipt = JSON.parse(readFileSync(join(directory, 'receipt.json'), 'utf8'))
-  expect(receipt.commit).toBe('d6222b752d5f5ee3ef36c7bac55eec3f67629c87')
+  expect(receipt.commit).toBe('d794bc9f2bb8fad7b20e390b3e8ec1c4f5617394')
   expect(receipt.files['contract.ts'].source_sha256).toBe(
-    '9e343cc3293005106563f3eba812cf83928e7a0e6abbf64f4da73373a3a898b9'
+    '5197d9b37a99784c7134966d32d37eb6d6700fc09663438b135307bf657b6100'
   )
   expect(receipt.files['source-mirrors.ts'].source_sha256).toBe(
-    '427930c35888981bad777a3da9e7cc71023d145dc4fa8da8b3f0bc5caa99065d'
+    'df7e86d4d0cf3197f8d919d8a9624adab5b550b3eb36ab6cba5d5c7c83f6a6f9'
   )
   for (const [name, value] of Object.entries(receipt.files) as [
     string,

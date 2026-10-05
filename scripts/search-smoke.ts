@@ -20,7 +20,7 @@ const fixture = () => {
   const declaration = '[skills.ki-repo]\nrepo_type = "kb"\nrepository = "https://github.com/fixture/alpha"\ntitle = "Alpha"\ndescription = "Synthetic Alpha"\nstore_roles = ["sources"]\n[skills.ki-repo-kb]\n[skills.ki-repo-kb.zones]\nPillars = "Knowledge"\n"+" = "Incoming"\n"-" = "Outgoing"\n'
   writeFileSync(join(kb, '.ki.toml'), declaration)
   mkdirSync(join(kb, 'Knowledge'))
-  const path = 'Knowledge/Mixed Case Note.md', text = `---\nsource_path: Records/Alpha.pdf\nsource_sha256: "${'a'.repeat(64)}"\n---\n# Real local title\n\nA local restoration answer belongs to Alpha. ${'durable fact '.repeat(30)}\n`
+  const path = 'Knowledge/Mixed Case Note.md', text = `---\nmirrors: alpha-sources/Records/Alpha.pdf\nmirror_type: summarised\nmirror_sha256: "${'a'.repeat(64)}"\n---\n# Real local title\n\nA local restoration answer belongs to Alpha. ${'durable fact '.repeat(30)}\n`
   writeFileSync(join(kb, path), text)
   const key = `documents/${sha256(path)}.md`
   writeFileSync(join(projection, key), text)
@@ -83,7 +83,7 @@ try {
         const result = await call({ kb: 'alpha', query: 'SECRET /private/query.md restoration', mode: searchMode, zone: 'Pillars', path_prefix: 'Knowledge' })
         assert.notEqual(result.isError, true)
         const content = result.structuredContent as { results: { path: string; snippet: string; line_start: number }[] }
-        assert.equal(content.results[0]?.path, f.path); assert.equal(content.results[0]?.line_start, 7)
+        assert.equal(content.results[0]?.path, f.path); assert.equal(content.results[0]?.line_start, 8)
         assert(!JSON.stringify(content).match(/HOSTILE|FOREIGN/))
       }
       for (const args of [{ kb: 'unknown', query: 'SECRET' }, { kb: 'alpha', query: 4 }, { kb: 'alpha', query: 'SECRET', extra: '/private/secret' }, { kb: 'alpha', query: 'SECRET', mode: 'invalid' }, { kb: 'alpha', query: 'SECRET', limit: 51 }, { kb: 'alpha', query: 'SECRET', path_prefix: '../private' }, { kb: 'alpha', query: 'é'.repeat(600) }, { kb: 'alpha', query: 'backend-failure', mode: 'search' }]) assert.equal((await call(args)).isError, true)

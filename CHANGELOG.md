@@ -12,3 +12,7 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 ### Added
 
 - Optional `kb_search` with explicit per-KB registry binding, canonical custom zones, current local citations, strict bounded retrieval and privacy-preserving search audits in modern/legacy sessions. Reads never provision models, indexes or daemons.
+
+### Changed
+
+- `kb_search` results label source mirrors from `mirrors`, `mirror_type` and `mirror_sha256`, which replace the `source_path` and `source_sha256` result fields; that provenance no longer makes a note a mirror.
