@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: 27cdc7fab09b00a2e379b8c7209111e8e4934042
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-05T13:09:18Z
+updated_at: 2026-10-05T13:10:20Z
 ---
 
 # MCP-KBFS-TOOL-004: Add kb_search tool
@@ -109,7 +109,7 @@ One selected item and exact singleton outcome envelope; no dynamically admitted 
 
 ## Delivery evidence
 
-The source is implemented against the immutable Ready/batch baseline. Required gates pass: 346 tests and 100% statements/branches/functions/lines; tsc/build/Biome/Knip; compiled modern/legacy smoke; MCP, engineering, authoring, specs and roadmap audits. Runtime evidence is under `/tmp/mcp-roadmap-completion-20261005/mcp-kbfs-*-final.log`. Parent independently ran the public SDK fixture using minimum Node22.16.0 (120 assertions); the independent reviewer expanded its fixture to 149 assertions. Exact terminal review binds the forthcoming clean packet commit.
+The source is implemented against the immutable Ready/batch baseline. Required gates pass: 346 tests and 100% statements/branches/functions/lines; tsc/build/Biome/Knip; compiled modern/legacy smoke; MCP, engineering, authoring, specs and roadmap audits. Runtime evidence is under `/tmp/mcp-roadmap-completion-20261005/mcp-kbfs-*-final.log`. The independent reviewer ran 149 public SDK assertions using both minimum Node22.16.0 and Node24.21.0, with each compiled child using the selected process executable. Exact terminal review binds the forthcoming clean packet commit.
 
 Independent review identified and fixed a fresh canonical-zone revocation gap. The adapter now resolves current zones from the exact declaration snapshot and compares current, mapping and startup authority before and after retrieval; reblessed digest changes cannot retain revoked folder access. Required local lexical/physical/protected note-path filters are applied alongside unchanged pinned vendor guards. No private KB/store or global binding was read or changed.
 
@@ -137,7 +137,7 @@ All checks passed sequentially on unchanged source with required coverage thresh
 - `biome` and `knip`: pass; Knip reports only six existing configuration hints, no errors.
 - `mcp`, `engineering`, `authoring`, `specs`, `roadmap`: focused governance audits pass with no failures or warnings.
 
-Independent public SDK verification is retained at `/tmp/mcp-roadmap-completion-20261005/search-sdk-independent.mjs`. Parent ran its 120-assertion snapshot using minimum Node22.16.0 (`search-sdk-independent-node22.log`); reviewer expanded it to 149 assertions including malformed inputs, model refusal, unchanged bytes/modes, Alpha/Omega isolation, hostile backend text/docid, audit append failure and fresh zone revocation before/after retrieval. Tools reviewer separately reproduced corrected pre-fetch revocation (zero daemon calls) and post-fetch refusal in `/tmp/ki-mcp-independent-revocation.ts`. Exact terminal reviewer approval binds the final clean packet commit separately.
+Independent public SDK verification is retained at `/tmp/mcp-roadmap-completion-20261005/search-sdk-independent.mjs`. Independent reviewer ran 149 assertions against clean source `b1604776da73a300270be29f48bd7a5ae5df2012` on both minimum Node22.16.0 and Node24.21.0, including malformed inputs, model refusal, unchanged bytes/modes, Alpha/Omega isolation, hostile backend text/docid, audit append failure and fresh zone revocation before/after retrieval. Both logs `search-sdk-independent-final-node22.log` and `search-sdk-independent-final-node24.log` record exit zero and 33 synthetic backend calls; child executable selection actually proves each version. The frozen independent script SHA-256 is `c0684679e7dc1909261d471f774d4991081763461924b35248f36df09277ef07`. Tools reviewer separately reproduced corrected pre-fetch revocation (zero daemon calls) and post-fetch refusal in `/tmp/ki-mcp-independent-revocation.ts`. Exact terminal reviewer approval binds the final clean packet commit separately.
 
 ### Outstanding concerns
 
