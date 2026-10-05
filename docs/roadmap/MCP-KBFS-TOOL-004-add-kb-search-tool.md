@@ -9,7 +9,7 @@ blocks: []
 blocked_by: []
 baseline_ref: null
 created_at: 2026-09-30T07:36:00Z
-updated_at: 2026-10-04T10:56:50Z
+updated_at: 2026-10-05T07:36:16Z
 ---
 
 # Add kb_search tool
@@ -41,6 +41,12 @@ The 2026-10-04 delegated review re-read all three upstream records. `KI-TOOL-CLI
 ## Verify
 
 Before leaving Waiting for, re-read the upstream records and their named durable evidence. Require actual pilot results, an explicit mapping owner and contract, pinned daemon request/response evidence, and agreed mirror labels. A later plan must test hostile daemon results against base, zone, protected-path and symlink boundaries before returning any content. Do not inspect or search real private KB content as part of this roadmap review.
+
+## Current delivery stop
+
+The 2026-10-05 delivery review re-read the upstream canonical records: `KI-TOOL-CLI-091` remains Waiting for / draft (`updated_at: 2026-09-30T15:18:21Z`); `KI-HARNESS-FND-028` and `KI-HARNESS-GOV-121` remain Triage / draft (`updated_at: 2026-09-30T07:00:00Z`). The qmd pilot is still described as a first task, not evidenced as completed. No accepted registry trust-boundary assignment or mirror-label contract is present. General authority to finish MCP items cannot manufacture these inputs or authorise searching real upstream KB content.
+
+Upstream work required: complete and record the direct-CLI pilot and its quality/context/failure results in `KI-HARNESS-FND-028`; settle the authoritative trust-boundary field and registry-derived index/daemon contract through `KI-TOOL-CLI-091`; settle source-store mirror labels through `KI-HARNESS-GOV-121`. Then shape this tool against those contracts, including hostile-daemon fixtures proving no cross-base or protected-content disclosure. Keep Waiting for / draft. Fresh selector and roadmap audits pass; this is a verified external delivery stop, not a test failure or completed search implementation.
 
 ## Discussion
 
