@@ -25,19 +25,30 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
     vi.resetModules()
   })
 
+  // `withAuditLog` appends fire-and-forget through the module's queue. Each test
+  // loads a fresh module instance, so track its drain and settle every queued
+  // append before asserting or removing the directory — fixed sleeps race the
+  // queue under coverage instrumentation and leak writes into the next test.
+  let drain: () => Promise<void> = async () => {}
+  const loadAuditLog = async () => {
+    const mod = await import('./audit-log.js')
+    drain = mod.drainAuditLog
+    return mod
+  }
+
   afterEach(async () => {
+    await drain()
+    drain = async () => {}
     await fs.rm(tmpDir, { recursive: true, force: true })
   })
 
-  const flushAsync = () => new Promise((r) => setTimeout(r, 20))
-
   it('appends an event line for a destructive-level tool', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     await wrapped({ path: 'memo.md' })
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.tool).toBe('kb_note_write')
     expect(event.level).toBe('destructive')
@@ -47,65 +58,65 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
   })
 
   it('redacts the content field on writeNote-style args', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     await wrapped({ path: 'memo.md', content: 'x'.repeat(5000) })
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.args.content).toMatch(/^\[redacted \d+B\]$/)
   })
 
   it('records ok:false when the result has isError:true', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       isError: true,
       content: [{ type: 'text', text: 'boom' }]
     }))
     await wrapped({})
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.ok).toBe(false)
     expect(event.error).toBe('boom')
   })
 
   it('records ok:false when the handler throws', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => {
       throw new Error('kaboom')
     })
     await expect(wrapped({})).rejects.toThrow(/kaboom/)
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.ok).toBe(false)
     expect(event.error).toBe('kaboom')
   })
 
   it('skips read-level tools by default (mode=writes)', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const handler = vi.fn(async () => ({ content: [{ type: 'text', text: 'ok' }] }))
     const wrapped = withAuditLog(auditCfg(), 'kb_note_read', 'read', handler)
     expect(wrapped).toBe(handler)
   })
 
   it('logs read-level tools when audit mode is "all"', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg({ mode: 'all' }), 'kb_note_read', 'read', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     await wrapped({})
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.level).toBe('read')
   })
 
   it('skips both levels when audit mode is "off" and never creates a log file', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const writeHandler = vi.fn(async (_args: unknown) => ({ content: [{ type: 'text', text: 'ok' }] }))
     expect(withAuditLog(auditCfg({ mode: 'off' }), 'kb_note_write', 'destructive', writeHandler)).toBe(writeHandler)
     await writeHandler({})
-    await flushAsync()
+    await drain()
     await expect(fs.access(logPath)).rejects.toThrow()
   })
 
@@ -114,43 +125,43 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
     await fs.writeFile(logPath, '', { mode: 0o644 })
     expect(((await fs.stat(logPath)).mode & 0o777).toString(8)).toBe('644')
 
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     await wrapped({})
-    await flushAsync()
+    await drain()
 
     const mode = (await fs.stat(logPath)).mode & 0o777
     expect(mode.toString(8)).toBe('600')
   })
 
   it('truncates args when the serialized form exceeds MAX_ARG_CHARS', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     // `content` gets redacted (short string), so use a different key with a huge value.
     await wrapped({ huge: 'x'.repeat(5000) })
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.args._truncated).toBe(true)
     expect(typeof event.args.preview).toBe('string')
   })
 
   it('logs array args verbatim (sanitizeArgs only rewrites plain objects)', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     await wrapped([1, 2, 3])
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.args).toEqual([1, 2, 3])
   })
 
   it('redacts URL credentials across string, array, nested-object and primitive arg values', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
@@ -160,7 +171,7 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
       nested: { remote: 'https://user:tok3n@example.com/z' },
       count: 42
     })
-    await flushAsync()
+    await drain()
     const raw = (await fs.readFile(logPath, 'utf-8')).trim()
     expect(raw).not.toContain('tok3n')
     const event = JSON.parse(raw)
@@ -171,46 +182,46 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
   })
 
   it('records an error result that lacks a text content block (error stays undefined)', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     // isError true but `content` is not an array, so extractErrorText returns undefined.
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({ isError: true }) as never)
     await wrapped({})
-    await flushAsync()
+    await drain()
     const event = JSON.parse((await fs.readFile(logPath, 'utf-8')).trim())
     expect(event.ok).toBe(false)
     expect(event.error).toBeUndefined()
   })
 
   it('never rotates when maxBytes=0 (rotation disabled)', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg({ maxBytes: 0 }), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     for (let i = 0; i < 6; i++) await wrapped({ idx: i, pad: 'x'.repeat(200) })
-    await new Promise((r) => setTimeout(r, 50))
+    await drain()
     // No rotation files exist; everything stayed in the single live log.
     await expect(fs.access(`${logPath}.1`)).rejects.toThrow()
     await expect(fs.access(logPath)).resolves.toBeUndefined()
   })
 
   it('rotates the audit log when it exceeds maxBytes (keeps history)', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 2 }), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     // Write enough events to trigger multiple rotations.
     for (let i = 0; i < 6; i++) await wrapped({ idx: i })
-    await new Promise((r) => setTimeout(r, 50))
+    await drain()
     await expect(fs.access(`${logPath}.1`)).resolves.toBeUndefined()
   })
 
   it('rotates by truncating the log when keep=0 (no history)', async () => {
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 0 }), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     for (let i = 0; i < 6; i++) await wrapped({ idx: i })
-    await new Promise((r) => setTimeout(r, 50))
+    await drain()
     // No `.1` rotation file when keep=0.
     await expect(fs.access(`${logPath}.1`)).rejects.toThrow()
   })
@@ -222,12 +233,12 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
     await fs.mkdir(path.dirname(logPath), { recursive: true })
     await fs.mkdir(`${logPath}.1`, { recursive: true })
     await fs.writeFile(path.join(`${logPath}.1`, 'blocker'), 'x')
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg({ maxBytes: 100, keep: 1 }), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))
     for (let i = 0; i < 6; i++) await wrapped({ idx: i })
-    await new Promise((r) => setTimeout(r, 50))
+    await drain()
     // Rotation failed, so the live log still exists and the blocker dir is intact.
     await expect(fs.access(logPath)).resolves.toBeUndefined()
     await expect(fs.access(path.join(`${logPath}.1`, 'blocker'))).resolves.toBeUndefined()
@@ -236,7 +247,7 @@ describe('appendAuditEvent / withAuditLog (mcp-ki-kb-fs)', () => {
   it('swallows appendFile failures (e.g. path is a directory) without throwing', async () => {
     // Make the log path a directory so appendFile fails with EISDIR.
     await fs.mkdir(logPath, { recursive: true })
-    const { withAuditLog } = await import('./audit-log.js')
+    const { withAuditLog } = await loadAuditLog()
     const wrapped = withAuditLog(auditCfg(), 'kb_note_write', 'destructive', async () => ({
       content: [{ type: 'text', text: 'ok' }]
     }))

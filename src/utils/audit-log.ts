@@ -149,6 +149,13 @@ export const appendAuditEvent = (audit: AuditConfig, event: AuditEvent): Promise
   return auditQueue
 }
 
+/**
+ * Resolve once every audit append queued so far has settled. Appends from
+ * `withAuditLog` are fire-and-forget, so a caller that must observe the log
+ * (graceful shutdown, tests) awaits this instead of sleeping.
+ */
+export const drainAuditLog = (): Promise<void> => auditQueue
+
 /** Search cannot report unaudited success when enabled storage is unavailable. */
 export const appendSearchAuditEvent = (audit: AuditConfig, event: AuditEvent): Promise<boolean> => {
   let appended = false
