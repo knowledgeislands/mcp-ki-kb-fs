@@ -15,6 +15,7 @@ repo_type = "project"
 primary_shape = "ki-repo-mcp"
 repository = "https://github.com/knowledgeislands/mcp-ki-kb-fs"
 title = "mcp-ki-kb-fs"
+capital = "https://github.com/knowledgeislands/ki-arcadia-principal"
 description = "MCP for Knowledge Islands knowledge bases on a local filesystem"
 repo_code = "MCP-KBFS"
 supported_runtimes = ["claude-code", "claude-desktop", "chatgpt-codex"]
@@ -78,8 +79,3 @@ auto_memory = "disabled"
 # -----------------------------------------------------------------------------
 
 [skills.ki-trades]
-
-[skills.ki-trades.routes."knowledgeislands/ki-agentic-harness"]
-export = ["work", "knowledge"]
-import = ["knowledge"]
-standing.export.knowledge = ["shared-capability-maintenance"]
