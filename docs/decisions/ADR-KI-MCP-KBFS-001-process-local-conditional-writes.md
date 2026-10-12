@@ -1,5 +1,5 @@
 ---
-id: ADR-MCP-KBFS-001
+id: ADR-KI-MCP-KBFS-001
 title: 'Process-local conditional writes'
 date: 2026-10-04
 status: current
@@ -7,7 +7,7 @@ decision_type: architecture
 decision_type_url: https://knowledgeislands.info/specifications/decision-records/adr
 ---
 
-# ADR-MCP-KBFS-001: Process-local conditional writes
+# ADR-KI-MCP-KBFS-001: Process-local conditional writes
 
 ## Context
 

@@ -1,5 +1,5 @@
 ---
-id: GDR-MCP-KBFS-001
+id: GDR-KI-MCP-KBFS-001
 title: 'Adopting Decision Records'
 date: 2026-09-07
 status: current
@@ -7,7 +7,7 @@ decision_type: governance
 decision_type_url: https://knowledgeislands.info/specifications/decision-records/gdr
 ---
 
-# GDR-MCP-KBFS-001: Adopting Decision Records
+# GDR-KI-MCP-KBFS-001: Adopting Decision Records
 
 ## Context
 
