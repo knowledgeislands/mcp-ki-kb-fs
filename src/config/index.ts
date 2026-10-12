@@ -275,7 +275,7 @@ export const resolveKiDeclaration = (
  * The knowledge-base declaration: a JSON object mapping caller-facing alias to
  * the base's absolute (or `~/…`) path, e.g.
  *
- *   MCP_KI_KB_FS_KNOWLEDGE_BASES={"kit-pkb":"~/kb/kit-pkb","kit-legal":"/srv/kb/legal"}
+ *   MCP_KI_KB_FS_KNOWLEDGE_BASES={"personal-principal":"~/kb/personal-principal","legal-principal":"/srv/kb/legal"}
  *
  * JSON rather than an ad-hoc separator grammar because it survives a single-line
  * client `env` value, needs no escaping rules of our own for paths containing
@@ -322,7 +322,7 @@ const parseDeclaration = (raw: string | undefined): [alias: string, rawPath: str
   const text = raw?.trim()
   if (!text) {
     throw new Error(
-      `${KNOWLEDGE_BASES_ENV_VAR} must be set to a JSON object mapping knowledge-base alias to path, e.g. {"kit-pkb":"~/kb/kit-pkb"}.`
+      `${KNOWLEDGE_BASES_ENV_VAR} must be set to a JSON object mapping knowledge-base alias to path, e.g. {"personal-principal":"~/kb/personal-principal"}.`
     )
   }
 

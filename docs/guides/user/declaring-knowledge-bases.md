@@ -9,7 +9,7 @@ Use it when setting up a new install, adding a base to an existing one, or worki
 `MCP_KI_KB_FS_KNOWLEDGE_BASES` is a JSON object mapping a caller-facing **alias** to that base's **absolute path**:
 
 ```json
-{ "kit-pkb": "~/kb/kit-pkb", "kit-legal": "/srv/kb/legal" }
+{ "personal-principal": "~/kb/personal-principal", "legal-principal": "/srv/kb/legal" }
 ```
 
 In a client configuration file the whole object is itself a JSON string, so its quotes need escaping — see [Installing the server](installing-the-server.md) for the Claude Desktop form.

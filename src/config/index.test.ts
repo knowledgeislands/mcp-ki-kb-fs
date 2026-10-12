@@ -42,12 +42,12 @@ const loadRaw = (raw: string) => () => loadConfig({ [KNOWLEDGE_BASES_ENV_VAR]: r
 describe('loadConfig', () => {
   describe(`knowledge-base declaration (${KNOWLEDGE_BASES_ENV_VAR})`, () => {
     it('resolves every declared alias to its own root, in declaration order', () => {
-      const cfg = loadDeclared({ 'kit-pkb': TOML_ROOT, 'kit-legal': SECOND_ROOT })
+      const cfg = loadDeclared({ 'personal-principal': TOML_ROOT, 'legal-principal': SECOND_ROOT })
 
-      expect(knowledgeBaseAliases(cfg)).toEqual(['kit-pkb', 'kit-legal'])
-      expect(selectKnowledgeBase(cfg, 'kit-pkb').rootPath).toBe(TOML_ROOT)
-      expect(selectKnowledgeBase(cfg, 'kit-legal').rootPath).toBe(SECOND_ROOT)
-      expect(selectKnowledgeBase(cfg, 'kit-legal').alias).toBe('kit-legal')
+      expect(knowledgeBaseAliases(cfg)).toEqual(['personal-principal', 'legal-principal'])
+      expect(selectKnowledgeBase(cfg, 'personal-principal').rootPath).toBe(TOML_ROOT)
+      expect(selectKnowledgeBase(cfg, 'legal-principal').rootPath).toBe(SECOND_ROOT)
+      expect(selectKnowledgeBase(cfg, 'legal-principal').alias).toBe('legal-principal')
     })
 
     it('leaves an absolute path unchanged', () => {
@@ -66,7 +66,7 @@ describe('loadConfig', () => {
     })
 
     it('throws when the declaration is not valid JSON', () => {
-      expect(loadRaw('{kit-pkb: /tmp}')).toThrow(new RegExp(`${KNOWLEDGE_BASES_ENV_VAR} is not valid JSON`))
+      expect(loadRaw('{personal-principal: /tmp}')).toThrow(new RegExp(`${KNOWLEDGE_BASES_ENV_VAR} is not valid JSON`))
     })
 
     it('throws when the declaration is not a JSON object', () => {
@@ -78,17 +78,21 @@ describe('loadConfig', () => {
     })
 
     it('throws when an alias does not map to a path string', () => {
-      expect(loadRaw('{"kit-pkb":42}')).toThrow(/alias "kit-pkb" must map to a path string/)
-      expect(loadRaw('{"kit-pkb":{"path":"/tmp"}}')).toThrow(/alias "kit-pkb" must map to a path string/)
+      expect(loadRaw('{"personal-principal":42}')).toThrow(/alias "personal-principal" must map to a path string/)
+      expect(loadRaw('{"personal-principal":{"path":"/tmp"}}')).toThrow(
+        /alias "personal-principal" must map to a path string/
+      )
     })
 
     it('throws when the same alias is declared twice', () => {
       // JSON.parse keeps only the last of two identical keys, so a duplicate
       // would otherwise silently pick a winner — for a base the caller believes
       // points somewhere else.
-      expect(loadRaw(`{"kit-pkb":${JSON.stringify(TOML_ROOT)},"kit-pkb":${JSON.stringify(SECOND_ROOT)}}`)).toThrow(
-        /declares alias "kit-pkb" more than once/
-      )
+      expect(
+        loadRaw(
+          `{"personal-principal":${JSON.stringify(TOML_ROOT)},"personal-principal":${JSON.stringify(SECOND_ROOT)}}`
+        )
+      ).toThrow(/declares alias "personal-principal" more than once/)
     })
 
     it('throws when a declared path is also a declared value elsewhere but no alias repeats', () => {
@@ -128,17 +132,19 @@ describe('loadConfig', () => {
     })
 
     it('throws when a declared path is empty', () => {
-      expect(loadRaw('{"kit-pkb":"   "}')).toThrow(/alias "kit-pkb" declares an empty path/)
+      expect(loadRaw('{"personal-principal":"   "}')).toThrow(/alias "personal-principal" declares an empty path/)
     })
 
     it('throws when a declared path is relative', () => {
       // A relative root would resolve against the host's launch directory, which
       // would make the authorisation boundary depend on ambient state.
-      expect(loadRaw('{"kit-pkb":"relative/kb"}')).toThrow(/must declare an absolute path or one starting "~\/"/)
+      expect(loadRaw('{"personal-principal":"relative/kb"}')).toThrow(
+        /must declare an absolute path or one starting "~\/"/
+      )
     })
 
     it('throws when a declared path does not exist — at startup, not on first call', () => {
-      expect(loadRaw(`{"kit-pkb":${JSON.stringify(path.join(TOML_ROOT, 'no-such-kb'))}}`)).toThrow(
+      expect(loadRaw(`{"personal-principal":${JSON.stringify(path.join(TOML_ROOT, 'no-such-kb'))}}`)).toThrow(
         /points at a path that does not exist/
       )
     })
@@ -147,7 +153,7 @@ describe('loadConfig', () => {
       const filePath = path.join(TOML_ROOT, 'not-a-directory')
       fs.writeFileSync(filePath, 'x', 'utf-8')
       try {
-        expect(loadRaw(`{"kit-pkb":${JSON.stringify(filePath)}}`)).toThrow(
+        expect(loadRaw(`{"personal-principal":${JSON.stringify(filePath)}}`)).toThrow(
           /points at something that is not a directory/
         )
       } finally {

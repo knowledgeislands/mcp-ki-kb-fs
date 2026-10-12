@@ -44,7 +44,7 @@ This is the canonical layout we roll out across the MCPs:
 - **[src/main/](./src/main/)** — the real implementation, usable outside the MCP server (e.g. from a script). Grouped by concern, mirroring the tool groups: `main/files/index.ts` (read/list/write/rename/delete — what the `kb_*` tools call), `main/notes/index.ts` (the Markdown-specific variants plus `createFolder`), `main/config/index.ts` (`readKbConfig`). Every `main` entry point takes one resolved `KnowledgeBase` as its **first argument** — `readNote(base, { path })`, `writeNote(base, args)` — never the whole `Config`. No hidden state, and no ability to reach a base the caller didn't name.
 - **[src/utils/](./src/utils/)** — cross-MCP reusable helpers; keep in sync with sibling repos. These take the **specific config primitive** they need (e.g. `resolveWithinRoot(rootPath, …)`, `withAuditLog(auditConfig, …)`, `makeAccessGatedRegister(server, accessLevel, audit)`), not the whole `Config`, so they stay MCP-agnostic. `isProtectedPath(relPath)` ([src/utils/protected.ts](./src/utils/protected.ts)) is a pure relpath guard with no config dependency.
 
-To use the code from a script: `const cfg = loadConfig(); const base = selectKnowledgeBase(cfg, 'kit-pkb'); await writeNote(base, { path: 'Pillars/note.md', content, create_dirs: true, dry_run: false })`.
+To use the code from a script: `const cfg = loadConfig(); const base = selectKnowledgeBase(cfg, 'personal-principal'); await writeNote(base, { path: 'Pillars/note.md', content, create_dirs: true, dry_run: false })`.
 
 ### Multiple knowledge bases
 

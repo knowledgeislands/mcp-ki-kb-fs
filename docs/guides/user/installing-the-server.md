@@ -26,7 +26,7 @@ bun run build
 `MCP_KI_KB_FS_KNOWLEDGE_BASES` is a JSON object mapping a caller-facing alias to each base's absolute path:
 
 ```json
-{ "kit-pkb": "~/kb/kit-pkb", "kit-legal": "/srv/kb/legal" }
+{ "personal-principal": "~/kb/personal-principal", "legal-principal": "/srv/kb/legal" }
 ```
 
 It is required, and it is the install's entire authorisation boundary: an alias that is not a key here is unreachable, and no tool argument can introduce a path. Name the bases you actually want a model working in, and nothing else — [Declaring your knowledge bases](declaring-knowledge-bases.md) covers the grammar, every startup rejection, and why there is no default base.
@@ -44,7 +44,7 @@ For Claude Desktop, add the server to `claude_desktop_config.json`. The declarat
       "command": "node",
       "args": ["/absolute/path/to/mcp-ki-kb-fs/dist/mcp-server/index.js"],
       "env": {
-        "MCP_KI_KB_FS_KNOWLEDGE_BASES": "{\"kit-pkb\":\"/path/to/your/kb\",\"kit-legal\":\"/path/to/another/kb\"}"
+        "MCP_KI_KB_FS_KNOWLEDGE_BASES": "{\"personal-principal\":\"/path/to/your/kb\",\"legal-principal\":\"/path/to/another/kb\"}"
       }
     }
   }
@@ -61,7 +61,7 @@ Then restart the client. Both the environment and each base's `.ki.toml` are rea
 
 Ask the client to list its tools. On a default install you should see four, all read-only: `kb_config`, `kb_list`, `kb_read`, and `kb_search`. Optional search needs [explicitly provisioned state](kb-search.md). If you see six or eight, the access level is not at its default — see [Choosing an access level](choosing-an-access-level.md). If you see none, see [Troubleshooting](troubleshooting.md).
 
-Then ask for something real: _call `kb_config` for `kit-pkb` and tell me which zones it has_. A first answer naming the top-level folders you recognise confirms the whole path — client launch, declaration parsing, startup validation, and `.ki.toml` resolution. [Reading and writing notes](reading-and-writing-notes.md) takes it from there.
+Then ask for something real: _call `kb_config` for `personal-principal` and tell me which zones it has_. A first answer naming the top-level folders you recognise confirms the whole path — client launch, declaration parsing, startup validation, and `.ki.toml` resolution. [Reading and writing notes](reading-and-writing-notes.md) takes it from there.
 
 ## Changing the configuration later
 

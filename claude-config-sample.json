@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["/path/to/mcp-ki-kb-fs/dist/mcp-server/index.js"],
       "env": {
-        "MCP_KI_KB_FS_KNOWLEDGE_BASES": "{\"kit-pkb\":\"/path/to/your/kb\",\"kit-legal\":\"/path/to/another/kb\"}"
+        "MCP_KI_KB_FS_KNOWLEDGE_BASES": "{\"personal-principal\":\"/path/to/your/kb\",\"legal-principal\":\"/path/to/another/kb\"}"
       }
     }
   }

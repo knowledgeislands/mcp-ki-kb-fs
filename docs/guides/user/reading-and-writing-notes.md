@@ -6,7 +6,7 @@ Everything here assumes the base is declared ([Declaring your knowledge bases](d
 
 ## Start by orienting
 
-> "Call `kb_config` for `kit-pkb` and tell me what its zones are."
+> "Call `kb_config` for `personal-principal` and tell me what its zones are."
 
 Worth doing first in any base you have not worked in recently, and worth doing again whenever a path is refused. It returns the resolved zone and staging names for that base, its root-file read allow-list, and its raw `.ki.toml` — plus the roster of every base this server may reach.
 
