@@ -2,7 +2,7 @@
  * Proves the layer boundaries in `.dependency-cruiser.ts` are enforced, and
  * that the checker is still reading this repository rather than agreeing with
  * an empty graph. dependency-cruiser supports TypeScript <7 only, so it runs
- * from its own install root (`tooling/boundaries`); against the repository's
+ * from its own install root (`tooling/depcruise`); against the repository's
  * TypeScript 7 it would cruise nothing and report nothing.
  */
 import { execFileSync } from 'node:child_process'
@@ -18,7 +18,7 @@ type Cruise = Readonly<{
 }>
 
 const root = resolve(import.meta.dirname, '..')
-const tooling = join(root, 'tooling/boundaries')
+const tooling = join(root, 'tooling/depcruise')
 const checker = join(tooling, 'node_modules/.bin/depcruise')
 // Subprocess cruises need headroom on a busy shared host or under coverage.
 const timeout = 30_000
