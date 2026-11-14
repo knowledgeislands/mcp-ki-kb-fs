@@ -1,6 +1,6 @@
 # KB search — KB-SEARCH
 
-This area specifies optional source-authenticated search; [the registry](index.md) owns IDs and conformance. The accepted upstream [adoption decision](../../../ki-agentic-harness/docs/decisions/ADR-KI-HARNESS-TOOLCHAIN-006-qmd-derived-kb-search-index.md) governs its optional scope.
+This area specifies optional source-authenticated search; [the registry](index.md) owns IDs and conformance. The accepted upstream [adoption decision](../../../ki-agent-backpack/docs/decisions/ADR-KI-HARNESS-TOOLCHAIN-006-qmd-derived-kb-search-index.md) governs its optional scope.
 
 ## User-observable behaviours
 
@@ -48,7 +48,7 @@ _Evidence:_ `src/config/search.test.ts`, `src/main/search/index.test.ts` and com
 
 ### KB-SEARCH-005 — Pinned bounded protocol
 
-Retrieval MUST use the pinned typed, bounded one-KB protocol and already provisioned mode-specific models. The upstream [search standard](../../../ki-agentic-harness/skills/repo-structure/ki-repo-kb/references/standards-search.md) and [tools mapping specification](../../../tools-ki/docs/specs/kb-search.md) own the wire schemas. The portable Node contract is vendored from tools commit `2f37fb0e94953ee9911cdf4f262f40176523d03c`, contract SHA-256 `5197d9b37a99784c7134966d32d37eb6d6700fc09663438b135307bf657b6100`. The canonical mirror helper SHA-256 is `aeb36ba9e9840989b38f87ff81360c29239fe530ac0aed8fb43e2a0d4f134128`. Only its contract import suffix changes from `.ts` to `.js`; a pinned digest/normalized-byte test detects drift.
+Retrieval MUST use the pinned typed, bounded one-KB protocol and already provisioned mode-specific models. The upstream [search standard](../../../ki-agent-backpack/skills/repository/ki-repo-kb/references/standards-search.md) and [tools mapping specification](../../../tools-ki/docs/specs/kb-search.md) own the wire schemas. The portable Node contract is vendored from tools commit `2f37fb0e94953ee9911cdf4f262f40176523d03c`, contract SHA-256 `5197d9b37a99784c7134966d32d37eb6d6700fc09663438b135307bf657b6100`. The canonical mirror helper SHA-256 is `aeb36ba9e9840989b38f87ff81360c29239fe530ac0aed8fb43e2a0d4f134128`. Only its contract import suffix changes from `.ts` to `.js`; a pinned digest/normalized-byte test detects drift.
 
 The explicit loopback endpoint is operator-owned and serves one KB/index. Pinned qmd 2.8.3 revision `facd35e01359e59d938bc9418e93fb9318addee3` accepts typed `searches[]` and exact `collections[]`, with 200 bounded candidates. HTTP hybrid uses lexical plus vector retrieval and reranking; lexical/vector modes disable reranking. HTTP hybrid does not claim the CLI's native query expansion. Existing local mode-specific models must already be provisioned. Redirects, oversized responses, bad JSON, unavailable transport and invalid candidates fail closed.
 
@@ -72,7 +72,7 @@ _Evidence:_ `src/main/search/index.test.ts` and compiled smoke return local titl
 
 ### KB-SEARCH-007 — No provisioning on reads
 
-Search MUST NOT install/download models, creates/refreshes an index, starts a daemon, changes client bindings or mutates canonical KB/registry files. The operator daemon may maintain disposable derived retrieval caches; read-only annotations describe canonical KB authority, not zero daemon-cache I/O. Missing, stale or invalid state returns a sanitized unavailable tool error. There is no implicit search fallback; the calling QUERY workflow owns literal grep and targeted reads. Optional adoption has no measured tiny-corpus efficiency advantage; see the [accepted decision](../../../ki-agentic-harness/docs/decisions/ADR-KI-HARNESS-TOOLCHAIN-006-qmd-derived-kb-search-index.md).
+Search MUST NOT install/download models, creates/refreshes an index, starts a daemon, changes client bindings or mutates canonical KB/registry files. The operator daemon may maintain disposable derived retrieval caches; read-only annotations describe canonical KB authority, not zero daemon-cache I/O. Missing, stale or invalid state returns a sanitized unavailable tool error. There is no implicit search fallback; the calling QUERY workflow owns literal grep and targeted reads. Optional adoption has no measured tiny-corpus efficiency advantage; see the [accepted decision](../../../ki-agent-backpack/docs/decisions/ADR-KI-HARNESS-TOOLCHAIN-006-qmd-derived-kb-search-index.md).
 
 _Conformance:_ conforming
 
