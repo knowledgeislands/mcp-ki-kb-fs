@@ -85,7 +85,7 @@ Traversal- and symlink-rejection tests live in [src/main/notes/index.test.ts](./
 
 Tools are registered in [src/tools/config/index.ts](./src/tools/config/index.ts) (`kb_config`) and [src/tools/kb/index.ts](./src/tools/kb/index.ts) (the other seven). To survey the surface, `grep "registerTool" src/tools/*/index.ts`. README's [Available Tools](./README.md#available-tools) tabulates them with purposes.
 
-Within each group file, `server.registerTool(...)` calls are kept in ascending alphabetical order by tool name — the `ki-mcp` TOOL-1 check enforces it.
+Within each group file, `server.registerTool(...)` calls are kept in ascending alphabetical order by tool name — the `ki-repo-mcp` TOOL-1 check enforces it.
 
 ## Result envelopes and `outputSchema`
 
