@@ -1,6 +1,6 @@
 # Guides
 
-Practical instructions for `mcp-ki-kb-fs` — an MCP server that gives a model read and write access to one or more Knowledge Islands knowledge bases on the local filesystem. Guides answer **how**: what someone does, in what order, and how they know it worked. The reasoning behind the design lives in [the decision records](../decisions/README.md), and planned work in [the roadmap](../roadmap/).
+Practical instructions for `mcp-ki-kb-fs` — an MCP server that gives a model read and write access to one or more Knowledge Islands knowledge bases on the local filesystem. Guides answer **how**: what someone does, in what order, and how they know it worked. The reasoning behind the design lives in [the decision records](../decisions/_index.md), and planned work in [the roadmap](../roadmap/).
 
 ## Contents
 
@@ -26,7 +26,7 @@ The server is read-only until you say otherwise. `MCP_KI_KB_FS_ACCESS_LEVEL` def
 | What is this and what can it do?    | [The README](../../README.md)                          |
 | What exactly does each tool accept? | The running server, via your MCP client's tool listing† |
 | How do I do a given piece of work?  | These guides                                            |
-| Why is it built this way?           | [Decision records](../decisions/README.md)             |
+| Why is it built this way?           | [Decision records](../decisions/_index.md)             |
 | What is planned or in flight?       | [The roadmap](../roadmap/)                             |
 
 † Each tool's parameters, defaults, enums, and descriptions are published by the server itself from the Zod schemas it validates against, and rendered live by your client. This repository deliberately keeps no second, hand-maintained copy of them, because a transcribed schema drifts from the code that serves it. What the guides carry instead is behaviour a schema cannot state: what a rejection means, which safeguard is doing the rejecting, and what to do next.

@@ -50,7 +50,7 @@ Each tool's arguments, defaults, enums, and descriptions are published by the ru
 | How do I set it up and use it?      | [User guides](./docs/guides/user/README.md)                   |
 | How do I change the code?           | [Developer guides](./docs/guides/developer/README.md)         |
 | What exactly does each tool accept? | The running server, via your client's tool listing            |
-| Why is it built this way?           | [Decision records](./docs/decisions/README.md)                |
+| Why is it built this way?           | [Decision records](./docs/decisions/_index.md)                |
 | What is planned or in flight?       | [The roadmap](./docs/roadmap/)                                |
 | How do I contribute?                | [CONTRIBUTING.md](./CONTRIBUTING.md)                          |
 | How do I report a vulnerability?    | [SECURITY.md](./SECURITY.md)                                  |

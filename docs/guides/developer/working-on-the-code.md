@@ -15,7 +15,7 @@ bun install
 bun install --cwd tooling/depcruise
 ```
 
-`bun install` runs `prepare`, which installs the husky hooks. Skipping it means your commits bypass formatting and commit-message checks that CI will not.
+`bun install` runs `prepare`, which points Git at the committed `.githooks/` hooks. Skipping it means your commits bypass formatting and commit-message checks that CI will not.
 
 The second install is the boundary checker's own root. dependency-cruiser supports TypeScript below 7 only, so it lives in `tooling/depcruise/` with its own lockfile rather than in the repository's TypeScript 7 install; `src/boundaries.test.ts` fails until it is present.
 

@@ -11,7 +11,7 @@ bun install
 bun install --cwd tooling/depcruise
 ```
 
-`bun install` runs `prepare`, which installs the husky hooks — so every commit auto-formats staged files and checks the commit message.
+`bun install` runs `prepare`, which points Git at the committed `.githooks/` hooks, so every commit auto-formats staged files and checks the commit message.
 
 ## Commits
 
@@ -40,7 +40,7 @@ Two kinds of change carry an extra obligation.
 
 **Error messages are a contract.** The user guides quote several verbatim, so changing one means updating [the guides](./docs/guides/user/README.md) in the same change.
 
-**Tool surface changes are wide.** Adding, removing, or renaming a tool touches `src/main/`, `src/tools/`, the `EXPECTED_TOOLS` list in `scripts/smoke.ts`, the inventory table in `README.md`, and `CLAUDE.md`.
+**Tool surface changes are wide.** Adding, removing, or renaming a tool touches `src/main/`, `src/tools/`, the `EXPECTED_TOOLS` list in `scripts/smoke.ts`, the inventory table in `README.md`, and `AGENTS.md`.
 
 ## Before opening a PR
 
